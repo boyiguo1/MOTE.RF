@@ -10,3 +10,5 @@ Description: One paragraph description of what the package does as one
 License: GPL (>= 2)
 Imports: Rcpp (>= 1.0.5)
 LinkingTo: Rcpp
+URL: https://github.com/boyiguo1/MOTE.RF
+BugReports: https://github.com/boyiguo1/MOTE.RF/issues
