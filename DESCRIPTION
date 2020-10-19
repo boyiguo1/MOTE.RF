@@ -1,14 +1,22 @@
 Package: MOTE.RF
 Type: Package
-Title: What the Package Does in One 'Title Case' Line
-Version: 1.0
+Title: Estimating Heterogeneous Treatment Effect on Multivariate Responses using Random Forests
+Version: 0.0.1
 Date: 2020-10-19
-Author: Your Name
-Maintainer: Your Name <your@email.com>
-Description: One paragraph description of what the package does as one
-        or more full sentences.
+Authors@R: c(
+    person(given = "Boyi",
+           family = "Guo",
+           role = c("aut", "cre"),
+           email = "boyiguo1@uab.edu",
+           comment = c(ORCID = "0000-0003-2950-2349")),
+    person(given = "Ruoqing", family = "Zhu",
+    role = c("aut"), email = "rqzhu@illinois.edu")
+           )
+Description: Multivariate Random Forest to estimate hetoerogeneous treatment effect for binary treatments.
 License: GPL (>= 2)
+Depends:	R (>= 3.6.0)
 Imports: Rcpp (>= 1.0.5)
 LinkingTo: Rcpp
 URL: https://github.com/boyiguo1/MOTE.RF
 BugReports: https://github.com/boyiguo1/MOTE.RF/issues
+RoxygenNote: 7.1.1
