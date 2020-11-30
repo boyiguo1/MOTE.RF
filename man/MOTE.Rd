@@ -53,8 +53,6 @@ MOTE(
 
 \item{class.weights}{Weights for the outcome classes (in order of the factor levels) in the splitting rule (cost sensitive learning). Classification and probability prediction only. For classification the weights are also applied in the majority vote in terminal nodes.}
 
-\item{splitrule}{Splitting rule. For classification and probability estimation "gini", "extratrees" or "hellinger" with default "gini". For regression "variance", "extratrees", "maxstat" or "beta" with default "variance". For survival "logrank", "extratrees", "C" or "maxstat" with default "logrank".}
-
 \item{num.random.splits}{For "extratrees" splitrule.: Number of random splits to consider for each candidate splitting variable.}
 
 \item{minprop}{For "maxstat" splitrule: Lower quantile of covariate distribution to be considered for splitting.}
@@ -98,8 +96,6 @@ Object of class \code{ranger} with elements
   \item{\code{num.independent.variables}}{Number of independent variables.}
   \item{\code{mtry}}{Value of mtry used.}
   \item{\code{min.node.size}}{Value of minimal node size used.}
-  \item{\code{treetype}}{Type of forest/tree. classification, regression or survival.}
-  \item{\code{importance.mode}}{Importance mode used.}
   \item{\code{num.samples}}{Number of samples.}
   \item{\code{inbag.counts}}{Number of times the observations are in-bag in the trees.}
 }

@@ -46,7 +46,6 @@
 ##' @param sample.fraction Fraction of observations to sample. Default is 1 for sampling with replacement and 0.632 for sampling without replacement. For classification, this can be a vector of class-specific values. 
 ##' @param case.weights Weights for sampling of training observations. Observations with larger weights will be selected with higher probability in the bootstrap (or subsampled) samples for the trees.
 ##' @param class.weights Weights for the outcome classes (in order of the factor levels) in the splitting rule (cost sensitive learning). Classification and probability prediction only. For classification the weights are also applied in the majority vote in terminal nodes.
-##' @param splitrule Splitting rule. For classification and probability estimation "gini", "extratrees" or "hellinger" with default "gini". For regression "variance", "extratrees", "maxstat" or "beta" with default "variance". For survival "logrank", "extratrees", "C" or "maxstat" with default "logrank". 
 # TODO: Update the definition for minprop and num.random.splits
 ##' @param num.random.splits For "extratrees" splitrule.: Number of random splits to consider for each candidate splitting variable.
 ##' @param minprop For "maxstat" splitrule: Lower quantile of covariate distribution to be considered for splitting.
@@ -75,8 +74,6 @@
 ##'   \item{\code{num.independent.variables}}{Number of independent variables.}
 ##'   \item{\code{mtry}}{Value of mtry used.}
 ##'   \item{\code{min.node.size}}{Value of minimal node size used.}
-##'   \item{\code{treetype}}{Type of forest/tree. classification, regression or survival.}
-##'   \item{\code{importance.mode}}{Importance mode used.}
 ##'   \item{\code{num.samples}}{Number of samples.}
 ##'   \item{\code{inbag.counts}}{Number of times the observations are in-bag in the trees.}
 ##' @examples
@@ -109,25 +106,18 @@
 ##' @import utils
 ##' @importFrom Matrix Matrix
 ##' @export
-MOTE <- function(formula = NULL, data = NULL, num.trees = 500, # mtry = NULL, importance = "none",
-                 write.forest = TRUE, # probability = FALSE,
-                   min.node.size = NULL, max.depth = NULL, replace = TRUE, 
-                   sample.fraction = ifelse(replace, 1, 0.632), 
-                   case.weights = NULL, class.weights = NULL, splitrule = NULL, 
-                   num.random.splits = 1, #alpha = 0.5, 
-                    minprop = 0.1,
-                 # split.select.weights = NULL, always.split.variables = NULL,
-                   # respect.unordered.factors = NULL,
-                   # scale.permutation.importance = FALSE,
-                   # local.importance = FALSE, 
-                   # regularization.factor = 1, regularization.usedepth = FALSE,
-                   keep.inbag = FALSE, inbag = NULL, holdout = FALSE,
-                   # quantreg = FALSE,
+MOTE <- function(formula = NULL, data = NULL, num.trees = 500, 
+                 write.forest = TRUE, 
+                 min.node.size = NULL, max.depth = NULL, replace = TRUE, 
+                 sample.fraction = ifelse(replace, 1, 0.632), 
+                 case.weights = NULL, class.weights = NULL, splitrule = NULL, 
+                 num.random.splits = 1,  
+                 minprop = 0.1,
+                 keep.inbag = FALSE, inbag = NULL, holdout = FALSE,
                  oob.error = TRUE,
-                   num.threads = NULL, # save.memory = FALSE,
-                   verbose = TRUE, seed = NULL, 
-                   dependent.variable.name = NULL, status.variable.name = NULL, 
-                   # classification = NULL, 
+                 num.threads = NULL,
+                 verbose = TRUE, seed = NULL, 
+                 dependent.variable.name = NULL, status.variable.name = NULL, 
                  x = NULL, y = NULL, ...) {
   
   ## Handle ... arguments
@@ -135,9 +125,6 @@ MOTE <- function(formula = NULL, data = NULL, num.trees = 500, # mtry = NULL, im
     warning(paste("Unused arguments:", paste(names(list(...)), collapse = ", ")))
   }
   
-  ## By default not in GWAS mode
-  # snp.data <- as.matrix(0)
-  # gwa.mode <- FALSE
   
   if (is.null(data)) {
     ## x/y interface
@@ -145,17 +132,6 @@ MOTE <- function(formula = NULL, data = NULL, num.trees = 500, # mtry = NULL, im
       stop("Error: Either data or x and y is required.")
     }
   }  else {
-    ## GenABEL GWA data
-    # if (inherits(data, "gwaa.data" )) {
-    #   snp.names <- data@gtdata@snpnames
-    #   snp.data <- data@gtdata@gtps@.Data
-    #   data <- data@phdata
-    #   if ("id" %in% names(data)) {
-    #     data$"id" <- NULL
-    #   }
-    #   gwa.mode <- TRUE
-    #   save.memory <- FALSE
-    # } 
     
     ## Formula interface. Use whole data frame if no formula provided and depvarname given
     if (is.null(formula)) {
@@ -212,121 +188,18 @@ MOTE <- function(formula = NULL, data = NULL, num.trees = 500, # mtry = NULL, im
     }
   }
   
-  ## Treetype
-  # if (is.factor(y) || is.logical(y)) {
-  #   if (probability) {
-  #     treetype <- 9
-  #   } else {
-  #     treetype <- 1
-  #   }
-  # } else if (is.numeric(y) && (is.null(ncol(y)) || ncol(y) == 1)) {
-  #   if (!is.null(classification) && classification && !probability) {
-  #     treetype <- 1
-  #   } else if (probability) {
-  #     treetype <- 9
-  #   } else {
-  #     treetype <- 3
-  #   }
-  # } else if (inherits(y, "Surv") || is.data.frame(y) || is.matrix(y)) {
-  #   treetype <- 5
-  # } else {
-  #   stop("Error: Unsupported type of dependent variable.")
-  # }
-  
-  ## Quantile prediction only for regression
-  # if (quantreg && treetype != 3) {
-  #   stop("Error: Quantile prediction implemented only for regression outcomes.")
-  # }
-  
   independent.variable.names <- colnames(x)
   
-  ## respect.unordered.factors
-  # if (is.null(respect.unordered.factors)) {
-  #   if (!is.null(splitrule) && splitrule == "extratrees") {
-  #     respect.unordered.factors <- "partition"
-  #   } else {
-  #     respect.unordered.factors <- "ignore"
-  #   }
-  # }
-  
-  ## Old version of respect.unordered.factors
-  # if (respect.unordered.factors == TRUE) {
-  #   respect.unordered.factors <- "order"
-  # } else if (respect.unordered.factors == FALSE) {
-  #   respect.unordered.factors <- "ignore"
-  # }
-  
-  ## Recode characters as factors and recode factors if 'order' mode
+  ## Handle of Char variables & Factor Varibles
   # TODO: create design matrix using reference cell coding
   if (!is.matrix(x) && !inherits(x, "Matrix") && ncol(x) > 0) {
     character.idx <- sapply(x, is.character)
-    
-    # if (respect.unordered.factors == "order") {
-    #   ## Recode characters and unordered factors
-    #   ordered.idx <- sapply(x, is.ordered)
-    #   factor.idx <- sapply(x, is.factor)
-    #   recode.idx <- character.idx | (factor.idx & !ordered.idx)
-    #   
-    #   if (any(recode.idx) & (importance == "impurity_corrected" || importance == "impurity_unbiased")) {
-    #     warning("Corrected impurity importance may not be unbiased for re-ordered factor levels. Consider setting respect.unordered.factors to 'ignore' or 'partition' or manually compute corrected importance.")
-    #   }
-    #   
-    #   ## Numeric response
-    #   if (is.factor(y)) {
-    #     num.y <- as.numeric(y)
-    #   } else {
-    #     num.y <- y
-    #   }
-    #   
-    #   ## Save non-recoded x if quantile regression
-    #   if (quantreg) {
-    #     x_orig <- x
-    #   }
-    #   
-    #   ## Recode each column
-    #   x[recode.idx] <- lapply(x[recode.idx], function(xx) {
-    #     if (!is.factor(xx)) {
-    #       xx <- as.factor(xx)
-    #     } 
-    #     
-    #     if (length(levels(xx)) == 1) {
-    #       ## Don't order if only one level
-    #       levels.ordered <- levels(xx)
-    #     } else if (inherits(y, "Surv")) {
-    #       ## Use median survival if available or largest quantile available in all strata if median not available
-    #       levels.ordered <- largest.quantile(y ~ xx)
-    #       
-    #       ## Get all levels not in node
-    #       levels.missing <- setdiff(levels(xx), levels.ordered)
-    #       levels.ordered <- c(levels.missing, levels.ordered)
-    #     } else if (is.factor(y) & nlevels(y) > 2) {
-    #       levels.ordered <- pca.order(y = y, x = xx)
-    #     } else {
-    #       ## Order factor levels by mean response
-    #       means <- sapply(levels(xx), function(y) {
-    #         mean(num.y[xx == y])
-    #       })
-    #       levels.ordered <- as.character(levels(xx)[order(means)])
-    #     }
-    #     
-    #     ## Return reordered factor
-    #     factor(xx, levels = levels.ordered, ordered = TRUE, exclude = NULL)
-    #   })
-    #   
-    #   ## Save levels
-    #   covariate.levels <- lapply(x, levels)
-    # } else {
-    #   ## Recode characters only
-    #   x[character.idx] <- lapply(x[character.idx], factor)
-    # }
+    ## Recode characters only
+    x[character.idx] <- lapply(x[character.idx], factor)
   }
   
-  ## If gwa mode, add snp variable names
-  # if (gwa.mode) {
-  #   all.independent.variable.names <- c(independent.variable.names, snp.names)
-  # } else {
-    all.independent.variable.names <- independent.variable.names
-  # }
+  
+  all.independent.variable.names <- independent.variable.names
   
   ## Error if no covariates
   if (length(all.independent.variable.names) < 1) {
@@ -338,41 +211,7 @@ MOTE <- function(formula = NULL, data = NULL, num.trees = 500, # mtry = NULL, im
     stop("Error: Invalid value for num.trees.")
   }
   
-  ## mtry as a function
-  # if (is.function(mtry)) {
-  #   nv <- length(all.independent.variable.names)
-  #   
-  #   if (length(formals(mtry)) > 1){
-  #     stop("Error: Given mtry function requires single argument (the number of independent variables in the model).")
-  #   }
-  #   
-  #   # Evaluate function
-  #   mtry <- try(mtry(nv), silent = TRUE)
-  #   
-  #   if (inherits(mtry, "try-error")) {
-  #     message("The mtry function produced the error: ", mtry)
-  #     stop("Error: mtry function evaluation resulted in an error.")
-  #   }
-    
-    ## Check for a single numeric
-    # if (!is.numeric(mtry) || length(mtry) != 1) {
-    #   stop("Error: Given mtry function should return a single integer or numeric.")
-    # } else {
-    #   mtry <- as.integer(mtry)
-    # }
-    
-    ## Check for limits
-  #   if (mtry < 1 || mtry > nv) {
-  #     stop("Error: Given mtry function should evaluate to a value not less than 1 and not greater than the number of independent variables ( = ", nv, " )")
-  #   }
-  # }
   
-  # if (is.null(mtry)) {
-  #   mtry <- 0
-  # } else if (!is.numeric(mtry) || mtry < 0) {
-  #   stop("Error: Invalid value for mtry")
-  # }
-  # 
   ## Seed
   if (is.null(seed)) {
     seed <- runif(1 , 0, .Machine$integer.max)
@@ -406,19 +245,20 @@ MOTE <- function(formula = NULL, data = NULL, num.trees = 500, # mtry = NULL, im
   }
   
   ## Sample fraction
+  # TODO: need to figure out how sample.fraction works
+  # This should be corresponding to the proportion of treatments
+  # TODO: force the sample.fraction to be length 2 regardless of what
   if (!is.numeric(sample.fraction)) {
     stop("Error: Invalid value for sample.fraction. Please give a value in (0,1] or a vector of values in [0,1].")
   }
   if (length(sample.fraction) > 1) {
-    if (!(treetype %in% c(1, 9))) {
-      stop("Error: Invalid value for sample.fraction. Vector values only valid for classification forests.")
-    }
     if (any(sample.fraction < 0) || any(sample.fraction > 1)) {
       stop("Error: Invalid value for sample.fraction. Please give a value in (0,1] or a vector of values in [0,1].")
     }
     if (sum(sample.fraction) <= 0) {
       stop("Error: Invalid value for sample.fraction. Sum of values must be >0.")
     }
+    #TODO: makes this alight with treatment values
     if (length(sample.fraction) != nlevels(y)) {
       stop("Error: Invalid value for sample.fraction. Expecting ", nlevels(y), " values, provided ", length(sample.fraction), ".")
     }
@@ -439,59 +279,9 @@ MOTE <- function(formula = NULL, data = NULL, num.trees = 500, # mtry = NULL, im
     }
   }
   
-  # Regularization
-  # if (all(regularization.factor == 1)) {
-  #   regularization.factor <-  c(0, 0)
-  #   use.regularization.factor <- FALSE
-  # } else {
-  #   # Deactivation of paralellization
-  #   if (num.threads != 1) {
-  #     num.threads <- 1
-  #     warning("Paralellization deactivated (regularization used).")
-  #   }
-  #   use.regularization.factor <- TRUE
-  # } 
-  # 
-  # if (use.regularization.factor) {
-  #   # A few checkings on the regularization coefficients
-  #   if (max(regularization.factor) > 1) {
-  #     stop("The regularization coefficients cannot be greater than 1.")
-  #   }
-  #   if (max(regularization.factor) <= 0) {
-  #     stop("The regularization coefficients cannot be smaller than 0.")
-  #   }
-  #   p <- length(all.independent.variable.names)
-  #   if (length(regularization.factor) != 1 && length(regularization.factor) != p) {
-  #     stop("You must use 1 or p (the number of predictor variables)
-  #     regularization coefficients.")
-  #   }
-  #   if (length(regularization.factor) == 1) {
-  #     regularization.factor = rep(regularization.factor, p)
-  #   }
-  # }
-  
-  ## Importance mode
-  # if (is.null(importance) || importance == "none") {
-  #   importance.mode <- 0
-  # } else if (importance == "impurity") {
-  #   importance.mode <- 1
-  # } else if (importance == "impurity_corrected" || importance == "impurity_unbiased") {
-  #   importance.mode <- 5
-  # } else if (importance == "impurity_oob") {
-  #   importance.mode <- 7
-  # } else if (importance == "permutation") {
-  #   if (local.importance) {
-  #     importance.mode <- 6
-  #   } else if (scale.permutation.importance) {
-  #     importance.mode <- 2
-  #   } else {
-  #     importance.mode <- 3
-  #   }
-  # } else {
-  #   stop("Error: Unknown importance mode.")
-  # }
   
   ## Case weights: NULL for no weights or all weights equal
+  # TODO: check what this does
   if (is.null(case.weights) || length(unique(case.weights)) == 1) {
     case.weights <- c(0,0)
     use.case.weights <- FALSE
@@ -512,6 +302,7 @@ MOTE <- function(formula = NULL, data = NULL, num.trees = 500, # mtry = NULL, im
   }
   
   ## Manual inbag selection
+  # TODO: check what this does
   if (is.null(inbag)) {
     inbag <- list(c(0,0))
     use.inbag <- FALSE
@@ -531,12 +322,10 @@ MOTE <- function(formula = NULL, data = NULL, num.trees = 500, # mtry = NULL, im
   }
   
   ## Class weights: NULL for no weights (all 1)
+  # TODO: check what this does
   if (is.null(class.weights)) {
     class.weights <- rep(1, nlevels(y))
   } else {
-    if (!(treetype %in% c(1, 9))) {
-      stop("Error: Argument class.weights only valid for classification forests.")
-    }
     if (!is.numeric(class.weights) || any(class.weights < 0)) {
       stop("Error: Invalid value for class.weights. Please give a vector of non-negative values.")
     }
@@ -548,178 +337,14 @@ MOTE <- function(formula = NULL, data = NULL, num.trees = 500, # mtry = NULL, im
     class.weights <- class.weights[unique(as.numeric(y))]
   }
   
-  ## Split select weights: NULL for no weights
-  # if (is.null(split.select.weights)) {
-  #   split.select.weights <- list(c(0,0))
-  #   use.split.select.weights <- FALSE
-  # } else if (is.numeric(split.select.weights)) {
-  #   if (length(split.select.weights) != length(all.independent.variable.names)) {
-  #     stop("Error: Number of split select weights not equal to number of independent variables.")
-  #   }
-  #   split.select.weights <- list(split.select.weights)
-  #   use.split.select.weights <- TRUE
-  # } else if (is.list(split.select.weights)) {
-  #   if (length(split.select.weights) != num.trees) {
-  #     stop("Error: Size of split select weights list not equal to number of trees.")
-  #   }
-  #   use.split.select.weights <- TRUE
-  # } else {
-  #   stop("Error: Invalid split select weights.")
-  # }
-  
-  ## Always split variables: NULL for no variables
-  # if (is.null(always.split.variables)) {
-  #   always.split.variables <- c("0", "0")
-  #   use.always.split.variables <- FALSE
-  # } else {
-  #   use.always.split.variables <- TRUE
-  # }
-  # 
-  # if (use.split.select.weights && use.always.split.variables) {
-  #   stop("Error: Please use only one option of split.select.weights and always.split.variables.")
-  # }
-  
-  ## Splitting rule
-  if (is.null(splitrule)) {
-    if (treetype == 5) {
-      splitrule <- "logrank"
-    } else if (treetype == 3) {
-      splitrule <- "variance"
-    } else if (treetype %in% c(1, 9)) {
-      splitrule <- "gini"
-    }
-    splitrule.num <- 1
-  } else if (splitrule == "logrank") {
-    if (treetype == 5) {
-      splitrule.num <- 1
-    } else {
-      stop("Error: logrank splitrule applicable to survival data only.")
-    }
-  } else if (splitrule == "gini") {
-    if (treetype %in% c(1, 9)) {
-      splitrule.num <- 1
-    } else {
-      stop("Error: Gini splitrule applicable to classification data only.")
-    }
-  } else if (splitrule == "variance") {
-    if (treetype == 3) {
-      splitrule.num <- 1
-    } else {
-      stop("Error: variance splitrule applicable to regression data only.")
-    }
-  } else if (splitrule == "auc" || splitrule == "C") {
-    if (treetype == 5) {
-      splitrule.num <- 2
-    } else {
-      stop("Error: C index splitrule applicable to survival data only.")
-    }
-  } else if (splitrule == "auc_ignore_ties" || splitrule == "C_ignore_ties") {
-    if (treetype == 5) {
-      splitrule.num <- 3
-    } else {
-      stop("Error: C index splitrule applicable to survival data only.")
-    }
-  } else if (splitrule == "maxstat") {
-    if (treetype == 5 || treetype == 3) {
-      splitrule.num <- 4
-    } else {
-      stop("Error: maxstat splitrule applicable to regression or survival data only.")
-    }
-  } else if (splitrule == "extratrees") {
-    splitrule.num <- 5
-  } else if (splitrule == "beta") {
-    if (treetype == 3) {
-      splitrule.num <- 6
-    } else {
-      stop("Error: beta splitrule applicable to regression data only.")
-    }
-    
-    ## Check for 0..1 outcome
-    if (min(y) < 0 || max(y) > 1) {
-      stop("Error: beta splitrule applicable to regression data with outcome between 0 and 1 only.")
-    }
-  } else if (splitrule == "hellinger") {
-    if (treetype %in% c(1, 9)) {
-      splitrule.num <- 7
-    } else {
-      stop("Error: Hellinger splitrule only implemented for binary classification.")
-    }
-    if ((is.factor(y) && nlevels(y) > 2) || (length(unique(y)) > 2)) {
-      stop("Error: Hellinger splitrule only implemented for binary classification.")
-    }  
-  } else {
-    stop("Error: Unknown splitrule.")
-  }
-  
-  ## Maxstat splitting
-  # if (alpha < 0 || alpha > 1) {
-  #   stop("Error: Invalid value for alpha, please give a value between 0 and 1.")
-  # }
   if (minprop < 0 || minprop > 0.5) {
     stop("Error: Invalid value for minprop, please give a value between 0 and 0.5.")
   }
-  # if (splitrule == "maxstat" & use.regularization.factor) {
-    # stop("Error: Regularization cannot be used with 'maxstat' splitrule.")
-  # }
   
-  ## Extra trees
   if (!is.numeric(num.random.splits) || num.random.splits < 1) {
     stop("Error: Invalid value for num.random.splits, please give a positive integer.")
   }
-  # if (splitrule.num == 5 && save.memory && respect.unordered.factors == "partition") {
-  #   stop("Error: save.memory option not possible in extraTrees mode with unordered predictors.")
-  # }
-  if (num.random.splits > 1 && splitrule.num != 5) {
-    warning("Argument 'num.random.splits' ignored if splitrule is not 'extratrees'.")
-  }
   
-  ## Unordered factors  
-  if (respect.unordered.factors == "partition") {
-    ordered.idx <- sapply(x, is.ordered)
-    factor.idx <- sapply(x, is.factor)
-    unordered.factor.variables <- independent.variable.names[factor.idx & !ordered.idx]
-    
-    if (length(unordered.factor.variables) > 0) {
-      use.unordered.factor.variables <- TRUE
-      ## Check level count
-      num.levels <- sapply(x[, factor.idx & !ordered.idx, drop = FALSE], nlevels)
-      max.level.count <- .Machine$double.digits
-      if (max(num.levels) > max.level.count) {
-        stop(paste("Too many levels in unordered categorical variable ", unordered.factor.variables[which.max(num.levels)], 
-                   ". Only ", max.level.count, " levels allowed on this system. Consider using the 'order' option.", sep = ""))
-      } 
-    } else {
-      unordered.factor.variables <- c("0", "0")
-      use.unordered.factor.variables <- FALSE
-    } 
-  } else if (respect.unordered.factors == "ignore" || respect.unordered.factors == "order") {
-    ## Ordering for "order" is handled above
-    unordered.factor.variables <- c("0", "0")
-    use.unordered.factor.variables <- FALSE
-  } else {
-    stop("Error: Invalid value for respect.unordered.factors, please use 'order', 'partition' or 'ignore'.")
-  }
-  
-  ## Unordered maxstat splitting not possible
-  if (use.unordered.factor.variables && !is.null(splitrule)) {
-    if (splitrule == "maxstat") {
-      stop("Error: Unordered factor splitting not implemented for 'maxstat' splitting rule.")
-    } else if (splitrule %in% c("C", "auc", "C_ignore_ties", "auc_ignore_ties")) {
-      stop("Error: Unordered factor splitting not implemented for 'C' splitting rule.")
-    } else if (splitrule == "beta") {
-      stop("Error: Unordered factor splitting not implemented for 'beta' splitting rule.")
-    }
-  }
-  
-  ## Warning for experimental 'order' splitting 
-  # if (respect.unordered.factors == "order") {
-  #   if (treetype == 3 && splitrule == "maxstat") {
-  #     warning("Warning: The 'order' mode for unordered factor handling with the 'maxstat' splitrule is experimental.")
-  #   }
-  #   if (gwa.mode & ((treetype %in% c(1,9) & nlevels(y) > 2) | treetype == 5)) {
-  #     stop("Error: Ordering of SNPs currently only implemented for regression and binary outcomes.")
-  #   }
-  # }
   
   ## Prediction mode always false. Use predict.ranger() method.
   prediction.mode <- FALSE
@@ -763,100 +388,38 @@ MOTE <- function(formula = NULL, data = NULL, num.trees = 500, # mtry = NULL, im
   
   ## Call MOTE
   ## TODO: implement MOTECPP
-  result <- MOTECpp(treetype, x, y.mat, independent.variable.names, # mtry,
-                      num.trees, verbose, seed, num.threads, write.forest, #importance.mode,
-                      min.node.size, # split.select.weights, use.split.select.weights,
-                      # always.split.variables, use.always.split.variables,
-                      prediction.mode, loaded.forest, snp.data,
-                      replace, # probability,
-                      unordered.factor.variables, use.unordered.factor.variables, 
-                      # save.memory, 
-                    splitrule.num, case.weights, use.case.weights, class.weights, 
-                      predict.all, keep.inbag, sample.fraction, # alpha,
+  result <- MOTECpp(treetype, x, y.mat, independent.variable.names, 
+                    num.trees, verbose, seed, num.threads, write.forest, 
+                    min.node.size, 
+                    prediction.mode, loaded.forest, snp.data,
+                    replace, case.weights, use.case.weights, class.weights, 
+                    predict.all, keep.inbag, sample.fraction,
                     minprop, holdout, prediction.type, 
-                      num.random.splits, sparse.x, use.sparse.data, order.snps, oob.error, max.depth, 
-                      inbag, use.inbag, 
-                      # regularization.factor, use.regularization.factor, regularization.usedepth
-                    )
+                    num.random.splits, sparse.x, use.sparse.data, oob.error, max.depth, 
+                    inbag, use.inbag 
+  )
   
   if (length(result) == 0) {
     stop("User interrupt or internal error.")
   }
   
   ## Prepare results
-  # if (importance.mode != 0) {
-  #   names(result$variable.importance) <- all.independent.variable.names
-  #   
-  #   if (importance.mode == 6) {
-  #     # TODO: What is this
-  #     # process casewise vimp
-  #     result$variable.importance.local <-
-  #       matrix(
-  #         result$variable.importance.local,
-  #         byrow = FALSE,
-  #         ncol = length(all.independent.variable.names),
-  #         dimnames = list(
-  #           rownames(data),
-  #           all.independent.variable.names
-  #         )
-  #       )
-  #   }
-  # }
-  
-  ## Set predictions
-  if (treetype == 1 && oob.error) {
-    if (is.factor(y)) {
-      result$predictions <- integer.to.factor(result$predictions,
-                                              levels(y))
-    } 
-    result$confusion.matrix <- table(y, result$predictions, 
-                                     dnn = c("true", "predicted"), useNA = "ifany")
-  } else if (treetype == 5 && oob.error) {
-    if (is.list(result$predictions)) {
-      result$predictions <- do.call(rbind, result$predictions)
-    } 
-    if (is.vector(result$predictions)) {
-      result$predictions <- matrix(result$predictions, nrow = 1)
-    }
-    result$chf <- result$predictions
-    result$predictions <- NULL
-    result$survival <- exp(-result$chf)
-  } else if (treetype == 9 && oob.error) {
-    if (is.list(result$predictions)) {
-      result$predictions <- do.call(rbind, result$predictions)
-    } 
-    if (is.vector(result$predictions)) {
-      result$predictions <- matrix(result$predictions, nrow = 1)
-    }
-    
-    ## Set colnames and sort by levels
-    colnames(result$predictions) <- unique(y)
-    if (is.factor(y)) {
-      result$predictions <- result$predictions[, levels(droplevels(y)), drop = FALSE]
-    }
+  # Varable importance
+  names(result$variable.importance) <- all.independent.variable.names
+
+  if (oob.error) {
+    ## TODO:organize the structure for prediction results
+    # if (is.list(result$predictions)) {
+    #   result$predictions <- do.call(rbind, result$predictions)
+    # } 
+    # if (is.vector(result$predictions)) {
+    #   result$predictions <- matrix(result$predictions, nrow = 1)
+    # }
   }
   
-  ## Splitrule
-  result$splitrule <- splitrule
-  if (splitrule == "extratrees") {
-    result$num.random.splits <- num.random.splits
-  }
-  
-  ## Set treetype
-  if (treetype == 1) {
-    result$treetype <- "Classification"
-  } else if (treetype == 3) {
-    result$treetype <- "Regression"
-  } else if (treetype == 5) {
-    result$treetype <- "Survival"
-  } else if (treetype == 9) {
-    result$treetype <- "Probability estimation"
-  }
-  if (treetype == 3) {
-    result$r.squared <- 1 - result$prediction.error / var(y)
-  }
+  # TODO: is it possible to calculate r.squared for us
+  # result$r.squared <- 1 - result$prediction.error / var(y)
   result$call <- sys.call()
-  # result$importance.mode <- importance
   if (use.sparse.data) {
     result$num.samples <- nrow(sparse.x)
   } else {
@@ -870,51 +433,16 @@ MOTE <- function(formula = NULL, data = NULL, num.trees = 500, # mtry = NULL, im
       result$forest$levels <- levels(y)
     }
     result$forest$independent.variable.names <- independent.variable.names
-    result$forest$treetype <- result$treetype
-    class(result$forest) <- "ranger.forest"
+    class(result$forest) <- "MOTE.forest"
     
     ## In 'ordered' mode, save covariate levels
-    if (respect.unordered.factors == "order" && ncol(x) > 0) {
-      result$forest$covariate.levels <- covariate.levels
-    }
+    ## TODO: How to save the reference leveling for factor analysis
+    # if (respect.unordered.factors == "order" && ncol(x) > 0) {
+    #   result$forest$covariate.levels <- covariate.levels
+    # }
   }
   
-  class(result) <- "ranger"
-  
-  ## Prepare quantile prediction
-  # if (quantreg) {
-  #   if (respect.unordered.factors == "order" && !is.null(x_orig)) {
-  #     terminal.nodes <- predict(result, x_orig, type = "terminalNodes")$predictions + 1
-  #   } else {
-  #     terminal.nodes <- predict(result, x, type = "terminalNodes")$predictions + 1
-  #   }
-  #   
-  #   n <- result$num.samples
-  #   result$random.node.values <- matrix(nrow = max(terminal.nodes), ncol = num.trees)
-  #   
-  #   ## Select one random obs per node and tree
-  #   for (tree in 1:num.trees){
-  #     idx <- sample(1:n, n)
-  #     result$random.node.values[terminal.nodes[idx, tree], tree] <- y[idx]
-  #   }
-  #   
-  #   ## Prepare out-of-bag quantile regression
-  #   if(!is.null(result$inbag.counts)) {
-  #     inbag.counts <- simplify2array(result$inbag.counts)
-  #     random.node.values.oob <- randomObsNode(terminal.nodes, y, inbag.counts)
-  #     
-  #     ## Check num.trees
-  #     minoob <- min(rowSums(inbag.counts == 0))
-  #     if (minoob < 10) {
-  #       stop("Error: Too few trees for out-of-bag quantile regression.")
-  #     }
-  #     
-  #     ## Use the same number of values for all obs, select randomly
-  #     result$random.node.values.oob <- t(apply(random.node.values.oob, 1, function(x) {
-  #       sample(x[!is.na(x)], minoob)
-  #     }))
-  #   }
-  # }
+  class(result) <- "MOTE"
   
   return(result)
 }
