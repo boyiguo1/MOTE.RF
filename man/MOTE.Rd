@@ -8,7 +8,6 @@ MOTE(
   formula = NULL,
   data = NULL,
   num.trees = 500,
-  importance = "none",
   write.forest = TRUE,
   min.node.size = NULL,
   max.depth = NULL,
@@ -18,10 +17,7 @@ MOTE(
   class.weights = NULL,
   splitrule = NULL,
   num.random.splits = 1,
-  alpha = 0.5,
   minprop = 0.1,
-  scale.permutation.importance = FALSE,
-  local.importance = FALSE,
   keep.inbag = FALSE,
   inbag = NULL,
   holdout = FALSE,
@@ -31,7 +27,6 @@ MOTE(
   seed = NULL,
   dependent.variable.name = NULL,
   status.variable.name = NULL,
-  classification = NULL,
   x = NULL,
   y = NULL,
   ...
@@ -44,9 +39,7 @@ MOTE(
 
 \item{num.trees}{Number of trees.}
 
-\item{importance}{Variable importance mode, one of 'none', 'impurity', 'impurity_corrected', 'impurity_oob', 'permutation'. The 'impurity' measure is the Gini index for classification, the variance of the responses for regression and the sum of test statistics (see \code{splitrule}) for survival.}
-
-\item{write.forest}{Save \code{ranger.forest} object, required for prediction. Set to \code{FALSE} to reduce memory usage if no prediction intended.}
+\item{write.forest}{Save \code{MOTE.forest} object, required for prediction. Set to \code{FALSE} to reduce memory usage if no prediction intended.}
 
 \item{min.node.size}{Minimal node size. Default 1 for classification, 5 for regression, 3 for survival, and 10 for probability.}
 
@@ -64,13 +57,7 @@ MOTE(
 
 \item{num.random.splits}{For "extratrees" splitrule.: Number of random splits to consider for each candidate splitting variable.}
 
-\item{alpha}{For "maxstat" splitrule: Significance threshold to allow splitting.}
-
 \item{minprop}{For "maxstat" splitrule: Lower quantile of covariate distribution to be considered for splitting.}
-
-\item{scale.permutation.importance}{Scale permutation importance by standard error as in (Breiman 2001). Only applicable if permutation variable importance mode selected.}
-
-\item{local.importance}{Calculate and return local importance values as in (Breiman 2001). Only applicable if \code{importance} is set to 'permutation'.}
 
 \item{keep.inbag}{Save how often observations are in-bag in each tree.}
 
@@ -90,8 +77,6 @@ MOTE(
 
 \item{status.variable.name}{Name of status variable, only applicable to survival data and needed if no formula given. Use 1 for event and 0 for censoring.}
 
-\item{classification}{Set to \code{TRUE} to grow a classification forest. Only needed if the data is a matrix or the response numeric.}
-
 \item{x}{Predictor data (independent variables), alternative interface to data with formula or dependent.variable.name.}
 
 \item{y}{Response vector (dependent variable), alternative interface to data with formula or dependent.variable.name. For survival use a \code{Surv()} object or a matrix with time and status.}
@@ -105,13 +90,9 @@ Object of class \code{ranger} with elements
   \item{\code{forest}}{Saved forest (If write.forest set to TRUE). Note that the variable IDs in the \code{split.varIDs} object do not necessarily represent the column number in R.}
   \item{\code{predictions}}{Predicted classes/values, based on out of bag samples (classification and regression only).}
   \item{\code{variable.importance}}{Variable importance for each independent variable.}
-  \item{\code{variable.importance.local}}{Variable importance for each independent variable and each sample, if \code{local.importance} is set to TRUE and \code{importance} is set to 'permutation'.}
   \item{\code{prediction.error}}{Overall out of bag prediction error. For classification this is the fraction of missclassified samples, for probability estimation the Brier score, for regression the mean squared error and for survival one minus Harrell's C-index.}
   \item{\code{r.squared}}{R squared. Also called explained variance or coefficient of determination (regression only). Computed on out of bag data.}
   \item{\code{confusion.matrix}}{Contingency table for classes and predictions based on out of bag samples (classification only).}
-  \item{\code{unique.death.times}}{Unique death times (survival only).}
-  \item{\code{chf}}{Estimated cumulative hazard function for each sample (survival only).}
-  \item{\code{survival}}{Estimated survival function for each sample (survival only).}
   \item{\code{call}}{Function call.}
   \item{\code{num.trees}}{Number of trees.}
   \item{\code{num.independent.variables}}{Number of independent variables.}

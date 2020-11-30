@@ -39,8 +39,7 @@
 ##' @param formula Object of class \code{formula} or \code{character} describing the model to fit. Interaction terms supported only for numerical variables.
 ##' @param data Training data of class \code{data.frame}, \code{matrix}, \code{dgCMatrix} (Matrix).
 ##' @param num.trees Number of trees.
-##' @param importance Variable importance mode, one of 'none', 'impurity', 'impurity_corrected', 'impurity_oob', 'permutation'. The 'impurity' measure is the Gini index for classification, the variance of the responses for regression and the sum of test statistics (see \code{splitrule}) for survival. 
-##' @param write.forest Save \code{ranger.forest} object, required for prediction. Set to \code{FALSE} to reduce memory usage if no prediction intended.
+##' @param write.forest Save \code{MOTE.forest} object, required for prediction. Set to \code{FALSE} to reduce memory usage if no prediction intended.
 ##' @param min.node.size Minimal node size. Default 1 for classification, 5 for regression, 3 for survival, and 10 for probability.
 ##' @param max.depth Maximal tree depth. A value of NULL or 0 (the default) corresponds to unlimited depth, 1 to tree stumps (1 split per tree).
 ##' @param replace Sample with replacement. 
@@ -48,11 +47,9 @@
 ##' @param case.weights Weights for sampling of training observations. Observations with larger weights will be selected with higher probability in the bootstrap (or subsampled) samples for the trees.
 ##' @param class.weights Weights for the outcome classes (in order of the factor levels) in the splitting rule (cost sensitive learning). Classification and probability prediction only. For classification the weights are also applied in the majority vote in terminal nodes.
 ##' @param splitrule Splitting rule. For classification and probability estimation "gini", "extratrees" or "hellinger" with default "gini". For regression "variance", "extratrees", "maxstat" or "beta" with default "variance". For survival "logrank", "extratrees", "C" or "maxstat" with default "logrank". 
+# TODO: Update the definition for minprop and num.random.splits
 ##' @param num.random.splits For "extratrees" splitrule.: Number of random splits to consider for each candidate splitting variable.
-##' @param alpha For "maxstat" splitrule: Significance threshold to allow splitting.
 ##' @param minprop For "maxstat" splitrule: Lower quantile of covariate distribution to be considered for splitting.
-##' @param scale.permutation.importance Scale permutation importance by standard error as in (Breiman 2001). Only applicable if permutation variable importance mode selected.
-##' @param local.importance Calculate and return local importance values as in (Breiman 2001). Only applicable if \code{importance} is set to 'permutation'.
 ##' @param keep.inbag Save how often observations are in-bag in each tree. 
 ##' @param inbag Manually set observations per tree. List of size num.trees, containing inbag counts for each observation. Can be used for stratified sampling.
 ##' @param holdout Hold-out mode. Hold-out all samples with case weight 0 and use these for variable importance and prediction error.
@@ -63,7 +60,6 @@
 ##' @param seed Random seed. Default is \code{NULL}, which generates the seed from \code{R}. Set to \code{0} to ignore the \code{R} seed. 
 ##' @param dependent.variable.name Name of dependent variable, needed if no formula given. For survival forests this is the time variable.
 ##' @param status.variable.name Name of status variable, only applicable to survival data and needed if no formula given. Use 1 for event and 0 for censoring.
-##' @param classification Set to \code{TRUE} to grow a classification forest. Only needed if the data is a matrix or the response numeric. 
 ##' @param x Predictor data (independent variables), alternative interface to data with formula or dependent.variable.name.
 ##' @param y Response vector (dependent variable), alternative interface to data with formula or dependent.variable.name. For survival use a \code{Surv()} object or a matrix with time and status.
 ##' @param ... Further arguments passed to or from other methods (currently ignored).
@@ -71,13 +67,9 @@
 ##'   \item{\code{forest}}{Saved forest (If write.forest set to TRUE). Note that the variable IDs in the \code{split.varIDs} object do not necessarily represent the column number in R.}
 ##'   \item{\code{predictions}}{Predicted classes/values, based on out of bag samples (classification and regression only).}
 ##'   \item{\code{variable.importance}}{Variable importance for each independent variable.}
-##'   \item{\code{variable.importance.local}}{Variable importance for each independent variable and each sample, if \code{local.importance} is set to TRUE and \code{importance} is set to 'permutation'.}
 ##'   \item{\code{prediction.error}}{Overall out of bag prediction error. For classification this is the fraction of missclassified samples, for probability estimation the Brier score, for regression the mean squared error and for survival one minus Harrell's C-index.}
 ##'   \item{\code{r.squared}}{R squared. Also called explained variance or coefficient of determination (regression only). Computed on out of bag data.}
 ##'   \item{\code{confusion.matrix}}{Contingency table for classes and predictions based on out of bag samples (classification only).}
-##'   \item{\code{unique.death.times}}{Unique death times (survival only).}
-##'   \item{\code{chf}}{Estimated cumulative hazard function for each sample (survival only).}
-##'   \item{\code{survival}}{Estimated survival function for each sample (survival only).}
 ##'   \item{\code{call}}{Function call.}
 ##'   \item{\code{num.trees}}{Number of trees.}
 ##'   \item{\code{num.independent.variables}}{Number of independent variables.}
@@ -117,16 +109,17 @@
 ##' @import utils
 ##' @importFrom Matrix Matrix
 ##' @export
-MOTE <- function(formula = NULL, data = NULL, num.trees = 500, #mtry = NULL,
-                   importance = "none", write.forest = TRUE, # probability = FALSE,
+MOTE <- function(formula = NULL, data = NULL, num.trees = 500, # mtry = NULL, importance = "none",
+                 write.forest = TRUE, # probability = FALSE,
                    min.node.size = NULL, max.depth = NULL, replace = TRUE, 
                    sample.fraction = ifelse(replace, 1, 0.632), 
                    case.weights = NULL, class.weights = NULL, splitrule = NULL, 
-                   num.random.splits = 1, alpha = 0.5, minprop = 0.1,
+                   num.random.splits = 1, #alpha = 0.5, 
+                    minprop = 0.1,
                  # split.select.weights = NULL, always.split.variables = NULL,
                    # respect.unordered.factors = NULL,
-                   scale.permutation.importance = FALSE,
-                   local.importance = FALSE, 
+                   # scale.permutation.importance = FALSE,
+                   # local.importance = FALSE, 
                    # regularization.factor = 1, regularization.usedepth = FALSE,
                    keep.inbag = FALSE, inbag = NULL, holdout = FALSE,
                    # quantreg = FALSE,
@@ -134,7 +127,8 @@ MOTE <- function(formula = NULL, data = NULL, num.trees = 500, #mtry = NULL,
                    num.threads = NULL, # save.memory = FALSE,
                    verbose = TRUE, seed = NULL, 
                    dependent.variable.name = NULL, status.variable.name = NULL, 
-                   classification = NULL, x = NULL, y = NULL, ...) {
+                   # classification = NULL, 
+                 x = NULL, y = NULL, ...) {
   
   ## Handle ... arguments
   if (length(list(...)) > 0) {
@@ -477,25 +471,25 @@ MOTE <- function(formula = NULL, data = NULL, num.trees = 500, #mtry = NULL,
   # }
   
   ## Importance mode
-  if (is.null(importance) || importance == "none") {
-    importance.mode <- 0
-  } else if (importance == "impurity") {
-    importance.mode <- 1
-  } else if (importance == "impurity_corrected" || importance == "impurity_unbiased") {
-    importance.mode <- 5
-  } else if (importance == "impurity_oob") {
-    importance.mode <- 7
-  } else if (importance == "permutation") {
-    if (local.importance) {
-      importance.mode <- 6
-    } else if (scale.permutation.importance) {
-      importance.mode <- 2
-    } else {
-      importance.mode <- 3
-    }
-  } else {
-    stop("Error: Unknown importance mode.")
-  }
+  # if (is.null(importance) || importance == "none") {
+  #   importance.mode <- 0
+  # } else if (importance == "impurity") {
+  #   importance.mode <- 1
+  # } else if (importance == "impurity_corrected" || importance == "impurity_unbiased") {
+  #   importance.mode <- 5
+  # } else if (importance == "impurity_oob") {
+  #   importance.mode <- 7
+  # } else if (importance == "permutation") {
+  #   if (local.importance) {
+  #     importance.mode <- 6
+  #   } else if (scale.permutation.importance) {
+  #     importance.mode <- 2
+  #   } else {
+  #     importance.mode <- 3
+  #   }
+  # } else {
+  #   stop("Error: Unknown importance mode.")
+  # }
   
   ## Case weights: NULL for no weights or all weights equal
   if (is.null(case.weights) || length(unique(case.weights)) == 1) {
@@ -658,9 +652,9 @@ MOTE <- function(formula = NULL, data = NULL, num.trees = 500, #mtry = NULL,
   }
   
   ## Maxstat splitting
-  if (alpha < 0 || alpha > 1) {
-    stop("Error: Invalid value for alpha, please give a value between 0 and 1.")
-  }
+  # if (alpha < 0 || alpha > 1) {
+  #   stop("Error: Invalid value for alpha, please give a value between 0 and 1.")
+  # }
   if (minprop < 0 || minprop > 0.5) {
     stop("Error: Invalid value for minprop, please give a value between 0 and 0.5.")
   }
@@ -770,7 +764,7 @@ MOTE <- function(formula = NULL, data = NULL, num.trees = 500, #mtry = NULL,
   ## Call MOTE
   ## TODO: implement MOTECPP
   result <- MOTECpp(treetype, x, y.mat, independent.variable.names, # mtry,
-                      num.trees, verbose, seed, num.threads, write.forest, importance.mode,
+                      num.trees, verbose, seed, num.threads, write.forest, #importance.mode,
                       min.node.size, # split.select.weights, use.split.select.weights,
                       # always.split.variables, use.always.split.variables,
                       prediction.mode, loaded.forest, snp.data,
@@ -778,7 +772,8 @@ MOTE <- function(formula = NULL, data = NULL, num.trees = 500, #mtry = NULL,
                       unordered.factor.variables, use.unordered.factor.variables, 
                       # save.memory, 
                     splitrule.num, case.weights, use.case.weights, class.weights, 
-                      predict.all, keep.inbag, sample.fraction, alpha, minprop, holdout, prediction.type, 
+                      predict.all, keep.inbag, sample.fraction, # alpha,
+                    minprop, holdout, prediction.type, 
                       num.random.splits, sparse.x, use.sparse.data, order.snps, oob.error, max.depth, 
                       inbag, use.inbag, 
                       # regularization.factor, use.regularization.factor, regularization.usedepth
@@ -789,23 +784,24 @@ MOTE <- function(formula = NULL, data = NULL, num.trees = 500, #mtry = NULL,
   }
   
   ## Prepare results
-  if (importance.mode != 0) {
-    names(result$variable.importance) <- all.independent.variable.names
-    
-    if (importance.mode == 6) {
-      # process casewise vimp
-      result$variable.importance.local <-
-        matrix(
-          result$variable.importance.local,
-          byrow = FALSE,
-          ncol = length(all.independent.variable.names),
-          dimnames = list(
-            rownames(data),
-            all.independent.variable.names
-          )
-        )
-    }
-  }
+  # if (importance.mode != 0) {
+  #   names(result$variable.importance) <- all.independent.variable.names
+  #   
+  #   if (importance.mode == 6) {
+  #     # TODO: What is this
+  #     # process casewise vimp
+  #     result$variable.importance.local <-
+  #       matrix(
+  #         result$variable.importance.local,
+  #         byrow = FALSE,
+  #         ncol = length(all.independent.variable.names),
+  #         dimnames = list(
+  #           rownames(data),
+  #           all.independent.variable.names
+  #         )
+  #       )
+  #   }
+  # }
   
   ## Set predictions
   if (treetype == 1 && oob.error) {
@@ -860,7 +856,7 @@ MOTE <- function(formula = NULL, data = NULL, num.trees = 500, #mtry = NULL,
     result$r.squared <- 1 - result$prediction.error / var(y)
   }
   result$call <- sys.call()
-  result$importance.mode <- importance
+  # result$importance.mode <- importance
   if (use.sparse.data) {
     result$num.samples <- nrow(sparse.x)
   } else {
