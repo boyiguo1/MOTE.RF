@@ -1,44 +1,42 @@
-#' Simulate MOTTE formated data
-#'
-#' @param n.train An integer value, sample size for training data
-#' @param n.test An integer value, sample size for testing data
-#' @param p An integer value, the dimensionality of covaraites (X)
-#' @param q An integer value, the dimensionality of responses (Y)
-#' @param ratio An fraction value, the ratio between treatment groups
-#' @param cov.mat Covariance matrix for X.b
-#' @param trt.f character, the name of treatment effect funciton
-#' @param link.f character, the name of treatment effect funciton
-#' @param B matrix, the coefficient matrix used in the trt.f
-#' @param Z matrix, the coefficient matrix used in the link.f
-#'
-#' @return A nested list that contain training data and testing data. TODO: add more introdcution to whats in the list
-#'
-#' @export
-#'
-#' @importFrom MASS mvrnorm
-#' @importFrom stats rbinom
-#'
-#' @examples
-#' set.seed(1)
-#'
-#' n.train = 400
-#' n.test = 1000
-#' p = 10
-#' q = 3
-#' ratio = 0.5
-#' cov.mat = diag(p)
-#' trt.f = "Polynomial"
-#' link.f = "Polynomial"
-#' B = create.B(p)
-#' Z = create.Z(p,q)
-#'
-#' # B <- create.B(10)
-#' # Z <- create.Z(10, 3)
-#'
-#' sim.dat <- sim_MOTE_data( n.train = 500, n.test = 200,
-#' p = 10, q = 3, ratio = 0.5,
-#' B = B, Z = Z)
-#'
+##' Simulate MOTTE formated data
+##'
+##' @param n.train An integer value, sample size for training data
+##' @param n.test An integer value, sample size for testing data
+##' @param p An integer value, the dimensionality of covaraites (X)
+##' @param q An integer value, the dimensionality of responses (Y)
+##' @param ratio An fraction value, the ratio between treatment groups
+##' @param cov.mat Covariance matrix for X.b
+##' @param trt.f character, the name of treatment effect funciton
+##' @param link.f character, the name of treatment effect funciton
+##' @param B matrix, the coefficient matrix used in the trt.f
+##' @param Z matrix, the coefficient matrix used in the link.f
+##'
+##' @return A nested list that contain training data and testing data. TODO: add more introdcution to whats in the list
+##'
+##' @export
+##'
+##' @importFrom MASS mvrnorm
+##' @importFrom stats rbinom
+##'
+##' @examples
+##' set.seed(1)
+##'
+##' n.train = 400
+##' n.test = 1000
+##' p = 10
+##' q = 3
+##' ratio = 0.5
+##' cov.mat = diag(p)
+##' trt.f = "Polynomial"
+##' link.f = "Polynomial"
+##' B = create.B(p)
+##' Z = create.Z(p,q)
+##'
+##'
+##' sim.dat <- sim_MOTE_data( n.train = 500, n.test = 200,
+##' p = 10, q = 3, ratio = 0.5,
+##' B = B, Z = Z)
+##'
 
 
 

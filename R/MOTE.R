@@ -58,7 +58,7 @@
 ##' @param verbose Show computation status and estimated runtime.
 ##' @param seed Random seed. Default is \code{NULL}, which generates the seed from \code{R}. Set to \code{0} to ignore the \code{R} seed. 
 ##' @param dependent.variable.name Name of dependent variable, needed if no formula given. For survival forests this is the time variable.
-##' @param status.variable.name Name of status variable, only applicable to survival data and needed if no formula given. Use 1 for event and 0 for censoring.
+##' @param trt.variable.name Name of treatment variable. Treatment variable should be a factor variable
 ##' @param x Predictor data (independent variables), alternative interface to data with formula or dependent.variable.name.
 ##' @param y Response vector (dependent variable), alternative interface to data with formula or dependent.variable.name. For survival use a \code{Surv()} object or a matrix with time and status.
 ##' @param ... Further arguments passed to or from other methods (currently ignored).
@@ -77,6 +77,13 @@
 ##'   \item{\code{num.samples}}{Number of samples.}
 ##'   \item{\code{inbag.counts}}{Number of times the observations are in-bag in the trees.}
 ##' @examples
+##' set.seed(1)
+##'
+##' B = create.B(p)
+##' Z = create.Z(p,q)
+##'
+##' sim.dat <- sim_MOTE_data(B = B, Z = Z)
+##' 
 ##' ## Classification forest with default settings
 ##' ranger(Species ~ ., data = iris)
 ##'
@@ -106,19 +113,24 @@
 ##' @import utils
 ##' @importFrom Matrix Matrix
 ##' @export
-MOTE <- function(formula = NULL, data = NULL, num.trees = 500, 
-                 write.forest = TRUE, 
-                 min.node.size = NULL, max.depth = NULL, replace = TRUE, 
-                 sample.fraction = ifelse(replace, 1, 0.632), 
-                 case.weights = NULL, class.weights = NULL, splitrule = NULL, 
-                 num.random.splits = 1,  
-                 minprop = 0.1,
-                 keep.inbag = FALSE, inbag = NULL, holdout = FALSE,
-                 oob.error = TRUE,
-                 num.threads = NULL,
-                 verbose = TRUE, seed = NULL, 
-                 dependent.variable.name = NULL, status.variable.name = NULL, 
-                 x = NULL, y = NULL, ...) {
+MOTE <- function(#formula = NULL, data = NULL, 
+                  x.b, x.e,
+                  treat,
+                  y.b, y.e,
+                  z,     # Covariates
+                  num.trees = 300, min.node.size = NULL, max.depth = NULL,
+                  num.random.splits = 1,  minprop = 0.1,
+                  write.forest = TRUE, 
+                  replace = TRUE, 
+                  sample.fraction = ifelse(replace, 1, 0.632), 
+                  case.weights = NULL, class.weights = NULL,
+                  keep.inbag = FALSE, inbag = NULL, holdout = FALSE,
+                  oob.error = TRUE,
+                  num.threads = NULL,
+                  verbose = TRUE, seed = NULL, 
+                  dependent.variable.name = NULL, 
+                  trt.variable.name = NULL, 
+                  ...) {
   
   ## Handle ... arguments
   if (length(list(...)) > 0) {
@@ -126,77 +138,102 @@ MOTE <- function(formula = NULL, data = NULL, num.trees = 500,
   }
   
   
-  if (is.null(data)) {
-    ## x/y interface
-    if (is.null(x) | is.null(y)) {
-      stop("Error: Either data or x and y is required.")
-    }
-  }  else {
-    
-    ## Formula interface. Use whole data frame if no formula provided and depvarname given
-    if (is.null(formula)) {
-      if (is.null(dependent.variable.name)) {
-        if (is.null(y) | is.null(x)) {
-          stop("Error: Please give formula, dependent variable name or x/y.")
-        } 
-      } else {
-        if (is.null(status.variable.name)) {
-          y <- data[, dependent.variable.name, drop = TRUE]
-          x <- data[, !(colnames(data) %in% dependent.variable.name), drop = FALSE]
-        } else {
-          y <- survival::Surv(data[, dependent.variable.name], data[, status.variable.name]) 
-          x <- data[, !(colnames(data) %in% c(dependent.variable.name, status.variable.name)), drop = FALSE]
-        }
-      }
-    } else {
-      formula <- formula(formula)
-      if (!inherits(formula, "formula")) {
-        stop("Error: Invalid formula.")
-      }
-      data.selected <- parse.formula(formula, data, env = parent.frame())
-      y <- data.selected[, 1]
-      x <- data.selected[, -1, drop = FALSE]
-    }
-  }
+  # TODO: reorganize data
+  # TODO: Create diff
+  # TODO: check treatment variable
+  # TODO: create design matrix for categorical variables
+  # creating X.b, X.e, Covariates
+  # if (is.null(data)) {
+  #   ## x/y interface
+  #   if (is.null(x) | is.null(y)) {
+  #     stop("Error: Either data or x and y is required.")
+  #   }
+  # }  else {
+  #   
+  #   ## Formula interface. Use whole data frame if no formula provided and depvarname given
+  #   if (is.null(formula)) {
+  #     if (is.null(dependent.variable.name)) {
+  #       if (is.null(y) | is.null(x)) {
+  #         stop("Error: Please give formula, dependent variable name or x/y.")
+  #       } 
+  #     } else {
+  #       if (is.null(status.variable.name)) {
+  #         y <- data[, dependent.variable.name, drop = TRUE]
+  #         x <- data[, !(colnames(data) %in% dependent.variable.name), drop = FALSE]
+  #       } else {
+  #         y <- survival::Surv(data[, dependent.variable.name], data[, status.variable.name]) 
+  #         x <- data[, !(colnames(data) %in% c(dependent.variable.name, status.variable.name)), drop = FALSE]
+  #       }
+  #     }
+  #   } else {
+  #     formula <- formula(formula)
+  #     if (!inherits(formula, "formula")) {
+  #       stop("Error: Invalid formula.")
+  #     }
+  #     data.selected <- parse.formula(formula, data, env = parent.frame())
+  #     y <- data.selected[, 1]
+  #     x <- data.selected[, -1, drop = FALSE]
+  #   }
+  # }
   
   ## Sparse matrix data
-  if (inherits(x, "Matrix")) {
-    if (!inherits(x, "dgCMatrix")) {
-      stop("Error: Currently only sparse data of class 'dgCMatrix' supported.")
-    } 
-    if (!is.null(formula)) {
-      stop("Error: Sparse matrices only supported with alternative interface. Use dependent.variable.name or x/y instead of formula.")
-    }
-  }
+  # if (inherits(x, "Matrix")) {
+  #   if (!inherits(x, "dgCMatrix")) {
+  #     stop("Error: Currently only sparse data of class 'dgCMatrix' supported.")
+  #   } 
+  #   if (!is.null(formula)) {
+  #     stop("Error: Sparse matrices only supported with alternative interface. Use dependent.variable.name or x/y instead of formula.")
+  #   }
+  # }
   
   ## Check missing values
-  if (any(is.na(x))) {
-    offending_columns <- colnames(x)[colSums(is.na(x)) > 0]
-    stop("Missing data in columns: ",
-         paste0(offending_columns, collapse = ", "), ".", call. = FALSE)
-  }
-  if (any(is.na(y))) {
-    stop("Missing data in dependent variable.", call. = FALSE)
-  }
+  # if (any(is.na(x))) {
+  #   offending_columns <- colnames(x)[colSums(is.na(x)) > 0]
+  #   stop("Missing data in columns: ",
+  #        paste0(offending_columns, collapse = ", "), ".", call. = FALSE)
+  # }
+  # if (any(is.na(y))) {
+  #   stop("Missing data in dependent variable.", call. = FALSE)
+  # }
   
   ## Check response levels
-  if (is.factor(y)) {
-    if (nlevels(y) != nlevels(droplevels(y))) {
-      dropped_levels <- setdiff(levels(y), levels(droplevels(y)))
-      warning("Dropped unused factor level(s) in dependent variable: ",
-              paste0(dropped_levels, collapse = ", "), ".", call. = FALSE)
-    }
+  # if (is.factor(y)) {
+  #   if (nlevels(y) != nlevels(droplevels(y))) {
+  #     dropped_levels <- setdiff(levels(y), levels(droplevels(y)))
+  #     warning("Dropped unused factor level(s) in dependent variable: ",
+  #             paste0(dropped_levels, collapse = ", "), ".", call. = FALSE)
+  #   }
+  # }
+  
+  if(!all(is.matrix(x.b), is.matrix(x.e), is.matrix(y.b), is.matrix(y.e)))
+    stop("Error Message: x.b, x.e, y.b, y.e must be numeric matrices")
+  
+  if(is.missing(Z)) {
+    Z <- NULL
   }
+  else {
+    if(!is.matrix(Z))
+      stop("Error Message: x.b, x.e, y.b, y.e must be numeric matrices")
+  }
+  
+  if(length(unique(
+    nrow(x.b),nrow(x.e),length(treat),nrow(y.b), nrow(y.b), nrow(Z)
+  ))!=1)
+    stop("Error Message: incosistent observation numbers in x.b, x.e, treat, y.b, y.e, Z")
+  
+  treat <- factor(treat)
+  if(length(levels(treat)) != 2)
+    stop("Error Message: Incorrect number of treatment groups. Must be 2 groups")
+  trt.lvl <- levels(treat)
   
   independent.variable.names <- colnames(x)
   
   ## Handle of Char variables & Factor Varibles
-  # TODO: create design matrix using reference cell coding
-  if (!is.matrix(x) && !inherits(x, "Matrix") && ncol(x) > 0) {
-    character.idx <- sapply(x, is.character)
-    ## Recode characters only
-    x[character.idx] <- lapply(x[character.idx], factor)
-  }
+  # if (!is.matrix(x) && !inherits(x, "Matrix") && ncol(x) > 0) {
+  #   character.idx <- sapply(x, is.character)
+  #   ## Recode characters only
+  #   x[character.idx] <- lapply(x[character.idx], factor)
+  # }
   
   
   all.independent.variable.names <- independent.variable.names
@@ -367,35 +404,25 @@ MOTE <- function(formula = NULL, data = NULL, num.trees = 500,
     }
   }
   
-  if (treetype == 5) {
-    y.mat <- as.matrix(y)
-  } else {
-    y.mat <- as.matrix(as.numeric(y))
-  }
   
-  if (respect.unordered.factors == "order"){
-    order.snps <- TRUE
-  } else {
-    order.snps <- FALSE
-  }
+  y.mat <- as.matrix(as.numeric(y))
   
-  ## No competing risks check
-  if (treetype == 5) {
-    if (!all(y.mat[, 2] %in% 0:1)) {
-      stop("Error: Competing risks not supported yet. Use status=1 for events and status=0 for censoring.")
-    }
-  }
   
   ## Call MOTE
   ## TODO: implement MOTECPP
-  result <- MOTECpp(treetype, x, y.mat, independent.variable.names, 
-                    num.trees, verbose, seed, num.threads, write.forest, 
-                    min.node.size, 
-                    prediction.mode, loaded.forest, snp.data,
+  result <- MOTECpp(  x.b, x.e,
+                      y.e-y.b,
+                      # y.b, y.e,
+                      treat,
+                      z,    
+                    independent.variable.names, 
+                    num.trees, verbose, seed, num.threads, write.forest, min.node.size,
+                    prediction.mode,  loaded.forest, 
                     replace, case.weights, use.case.weights, class.weights, 
                     predict.all, keep.inbag, sample.fraction,
                     minprop, holdout, prediction.type, 
-                    num.random.splits, sparse.x, use.sparse.data, oob.error, max.depth, 
+                    num.random.splits, #sparse.x, use.sparse.data, 
+                    oob.error, max.depth, 
                     inbag, use.inbag 
   )
   
@@ -406,7 +433,7 @@ MOTE <- function(formula = NULL, data = NULL, num.trees = 500,
   ## Prepare results
   # Varable importance
   names(result$variable.importance) <- all.independent.variable.names
-
+  
   if (oob.error) {
     ## TODO:organize the structure for prediction results
     # if (is.list(result$predictions)) {
