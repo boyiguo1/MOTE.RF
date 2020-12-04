@@ -1,6 +1,6 @@
-##' Simulate MOTTE formated data
-##'
-##' @param n.train An integer value, sample size for training data
+#' Simulate MOTTE formated data
+#'
+#' @param n.train An integer value, sample size for training data
 ##' @param n.test An integer value, sample size for testing data
 ##' @param p An integer value, the dimensionality of covaraites (X)
 ##' @param q An integer value, the dimensionality of responses (Y)
@@ -13,22 +13,22 @@
 ##'
 ##' @return A nested list that contain training data and testing data. TODO: add more introdcution to whats in the list
 ##'
-##' @export
-##'
-##' @importFrom MASS mvrnorm
-##' @importFrom stats rbinom
-##'
-##' @examples
-##' set.seed(1)
-##'
-##' n.train = 400
-##' n.test = 1000
-##' p = 10
-##' q = 3
-##' ratio = 0.5
-##' cov.mat = diag(p)
-##' trt.f = "Polynomial"
-##' link.f = "Polynomial"
+#' @export
+#'
+#' @importFrom MASS mvrnorm
+#' @importFrom stats rbinom
+#'
+#' @examples
+#' set.seed(1)
+#'
+#' n.train = 400
+#' n.test = 1000
+#' p = 10
+#' q = 3
+#' ratio = 0.5
+#' cov.mat = diag(p)
+#' trt.f = "Polynomial"
+#' link.f = "Polynomial"
 ##' B = create.B(p)
 ##' Z = create.Z(p,q)
 ##'
@@ -96,8 +96,8 @@ sim_MOTE_data <- function(
   X.train.base <- MASS::mvrnorm(n.train,rep(0,p), cov.mat)
   X.train.end <- X.train.base + .trt.f(X.train.base, ifelse(Trt.train=="Trt 1", 1, -1)) + mvrnorm(n.train, rep(0,p), c.x*diag(p))
   
-  Y.train.base <- .link.f(X.train.base) + mvrnorm(n.train, rep(0,q), c.y*diag(q))
-  Y.train.end <- .link.f(X.train.end) + mvrnorm(n.train, rep(0,q), c.y*diag(q))
+  Y.train.base <- .link.f(X.train.base) + MASS::mvrnorm(n.train, rep(0,q), c.y*diag(q))
+  Y.train.end <- .link.f(X.train.end) + MASS::mvrnorm(n.train, rep(0,q), c.y*diag(q))
   
   
   ####################################
