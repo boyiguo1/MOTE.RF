@@ -21,7 +21,8 @@
 ##' * The mtry variable that randomly selected variables doesn't exist in our framework, as we are using oblique splitting rules.
 ##' * For factor covriates, a reference coding design matrix will be created accordingly. TODO: it is possible to extend this later by extending to ordered factors.
 ##' * The importance of variables/features are calculated by accumulating the coefficients in the oblique splitting rules weighted by node sample size.
-##'
+##' * The model yet to provide handling of missing value. Data containing missing value can promote computation error and warning.
+##' 
 ##' For a large number of variables and data frames as input data the formula interface can be slow or impossible to use.
 ##' TODO: need improve this part a little bit
 ##' Alternatively \code{dependent.variable.name} and \code{status.variable.name} for treatment category or \code{x} and \code{y} can be used.
@@ -85,7 +86,7 @@
 ##' sim.dat <- sim_MOTE_data(B = B, Z = Z)
 ##' 
 ##' ## Classification forest with default settings
-##' ranger(Species ~ ., data = iris)
+##' MOTE(Species ~ ., data = iris)
 ##'
 ##' ## Prediction
 ##' train.idx <- sample(nrow(iris), 2/3 * nrow(iris))
@@ -93,12 +94,7 @@
 ##' iris.test <- iris[-train.idx, ]
 ##' rg.iris <- ranger(Species ~ ., data = iris.train)
 ##' pred.iris <- predict(rg.iris, data = iris.test)
-##' table(iris.test$Species, pred.iris$predictions)
 ##' 
-##' ## Quantile regression forest
-##' rf <- ranger(mpg ~ ., mtcars[1:26, ], quantreg = TRUE)
-##' pred <- predict(rf, mtcars[27:32, ], type = "quantiles")
-##' pred$predictions
 ##'
 ##'
 ##' @author Boyi Guo
@@ -107,7 +103,7 @@
 ##'   \item Guo et al. (Submitted). Estimating Heterogeneous Treatment Effect on Multivariate Responses using Random Forests. \url{https://doi.org/xxxx}.
 ##'   }
 ##' @seealso \code{\link{predict.MOTE}}
-##' @useDynLib MOTE, .registration = TRUE
+##' @useDynLib MOTE.RF, .registration = TRUE
 ##' @importFrom Rcpp evalCpp
 ##' @import stats 
 ##' @import utils
@@ -117,7 +113,7 @@ MOTE <- function(#formula = NULL, data = NULL,
                   x.b, x.e,
                   treat,
                   y.b, y.e,
-                  z,     # Covariates
+                  Z,     # Covariates
                   num.trees = 300, min.node.size = NULL, max.depth = NULL,
                   num.random.splits = 1,  minprop = 0.1,
                   write.forest = TRUE, 
@@ -208,8 +204,9 @@ MOTE <- function(#formula = NULL, data = NULL,
   if(!all(is.matrix(x.b), is.matrix(x.e), is.matrix(y.b), is.matrix(y.e)))
     stop("Error Message: x.b, x.e, y.b, y.e must be numeric matrices")
   
-  if(is.missing(Z)) {
+  if(missing(Z)) {
     Z <- NULL
+    # Z <- matrix(0, 2, 2)
   }
   else {
     if(!is.matrix(Z))
@@ -226,7 +223,7 @@ MOTE <- function(#formula = NULL, data = NULL,
     stop("Error Message: Incorrect number of treatment groups. Must be 2 groups")
   trt.lvl <- levels(treat)
   
-  independent.variable.names <- colnames(x)
+  independent.variable.names <- colnames(x.b)
   
   ## Handle of Char variables & Factor Varibles
   # if (!is.matrix(x) && !inherits(x, "Matrix") && ncol(x) > 0) {
@@ -239,9 +236,10 @@ MOTE <- function(#formula = NULL, data = NULL,
   all.independent.variable.names <- independent.variable.names
   
   ## Error if no covariates
-  if (length(all.independent.variable.names) < 1) {
-    stop("Error: No covariates found.")
-  }
+  # TODO: examine if this step is necessary
+  # if (length(all.independent.variable.names) < 1) {
+  #   stop("Error: No covariates found.")
+  # }
   
   ## Number of trees
   if (!is.numeric(num.trees) || num.trees < 1) {
@@ -268,6 +266,7 @@ MOTE <- function(#formula = NULL, data = NULL,
   }
   
   ## Minumum node size
+  ## TODO: match this with dimension
   if (is.null(min.node.size)) {
     min.node.size <- 0
   } else if (!is.numeric(min.node.size) || min.node.size < 0) {
@@ -296,24 +295,25 @@ MOTE <- function(#formula = NULL, data = NULL,
       stop("Error: Invalid value for sample.fraction. Sum of values must be >0.")
     }
     #TODO: makes this alight with treatment values
-    if (length(sample.fraction) != nlevels(y)) {
-      stop("Error: Invalid value for sample.fraction. Expecting ", nlevels(y), " values, provided ", length(sample.fraction), ".")
+    if (length(sample.fraction) != nlevels(treat)) {
+      stop("Error: Invalid value for sample.fraction. Expecting ", nlevels(treat), " values, provided ", length(sample.fraction), ".")
     }
-    if (!replace & any(sample.fraction * length(y) > table(y))) {
-      idx <- which(sample.fraction * length(y) > table(y))[1]
+    if (!replace & any(sample.fraction * length(treat) > table(treat))) {
+      idx <- which(sample.fraction * length(treat) > table(treat))[1]
       stop("Error: Not enough samples in class ", names(idx), 
-           "; available: ", table(y)[idx], 
-           ", requested: ", (sample.fraction * length(y))[idx], ".")
+           "; available: ", table(treat)[idx], 
+           ", requested: ", (sample.fraction * length(treat))[idx], ".")
     }
     if (!is.null(case.weights)) {
       stop("Error: Combination of case.weights and class-wise sampling not supported.")
     }
     # Fix order (C++ needs sample.fraction in order as classes appear in data)
-    sample.fraction <- sample.fraction[as.numeric(unique(y))]
+    sample.fraction <- sample.fraction[as.numeric(unique(treat))]
   } else {
     if (sample.fraction <= 0 || sample.fraction > 1) {
       stop("Error: Invalid value for sample.fraction. Please give a value in (0,1] or a vector of values in [0,1].")
     }
+    sample.fraction <- rep(sample.fraction, nlevels(treat))
   }
   
   
@@ -361,17 +361,17 @@ MOTE <- function(#formula = NULL, data = NULL,
   ## Class weights: NULL for no weights (all 1)
   # TODO: check what this does
   if (is.null(class.weights)) {
-    class.weights <- rep(1, nlevels(y))
+    class.weights <- rep(1, nlevels(treat))
   } else {
     if (!is.numeric(class.weights) || any(class.weights < 0)) {
       stop("Error: Invalid value for class.weights. Please give a vector of non-negative values.")
     }
-    if (length(class.weights) != nlevels(y)) {
+    if (length(class.weights) != nlevels(treat)) {
       stop("Error: Number of class weights not equal to number of classes.")
     }
     
     ## Reorder (C++ expects order as appearing in the data)
-    class.weights <- class.weights[unique(as.numeric(y))]
+    class.weights <- class.weights[unique(as.numeric(treat))]
   }
   
   if (minprop < 0 || minprop > 0.5) {
@@ -392,35 +392,42 @@ MOTE <- function(#formula = NULL, data = NULL,
   loaded.forest <- list()
   
   ## Use sparse matrix
-  if (inherits(x, "dgCMatrix")) {
-    sparse.x <- x
-    x <- matrix(c(0, 0))
-    use.sparse.data <- TRUE
-  } else {
-    sparse.x <- Matrix(matrix(c(0, 0)))
-    use.sparse.data <- FALSE
-    if (is.data.frame(x)) {
-      x <- data.matrix(x)
-    }
-  }
+  # if (inherits(x, "dgCMatrix")) {
+  #   sparse.x <- x
+  #   x <- matrix(c(0, 0))
+  #   use.sparse.data <- TRUE
+  # } else {
+  #   sparse.x <- Matrix(matrix(c(0, 0)))
+  #   use.sparse.data <- FALSE
+  #   if (is.data.frame(x.b)) {
+  #     x.b <- data.matrix(x.b)
+  #   }
+  # }
   
   
-  y.mat <- as.matrix(as.numeric(y))
+  # y.mat <- as.matrix(as.numeric(y))
   
+  debug.break <- TRUE
+  
+  x.b.new <- cbind(x.b, Z)
+  x.diff <- x.e - x.b
+  independent.variable.names <- colnames(x.b.new)
+  if(is.null(independent.variable.names))
+    independent.variable.names <- paste0("Var", seq(1, ncol(x.b.new)))
   
   ## Call MOTE
   ## TODO: implement MOTECPP
-  result <- MOTECpp(  x.b, x.e,
+  result <- MOTECpp(  x.b.new, x.diff,
                       y.e-y.b,
                       # y.b, y.e,
                       treat,
-                      z,    
+                      # Z,    
                     independent.variable.names, 
                     num.trees, verbose, seed, num.threads, write.forest, min.node.size,
                     prediction.mode,  loaded.forest, 
                     replace, case.weights, use.case.weights, class.weights, 
                     predict.all, keep.inbag, sample.fraction,
-                    minprop, holdout, prediction.type, 
+                    minprop, holdout, #prediction.type, 
                     num.random.splits, #sparse.x, use.sparse.data, 
                     oob.error, max.depth, 
                     inbag, use.inbag 
