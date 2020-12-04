@@ -83,6 +83,15 @@ using namespace arma;
  // CCA wrapper functions
  mat cancor(mat& matr_1, mat& matr_2);
  
+ /**
+  * Split sequence start..end in num_parts parts with sizes as equal as possible.
+  * @param result Result vector of size num_parts+1. Ranges for the parts are then result[0]..result[1]-1, result[1]..result[2]-1, ..
+  * @param start minimum value
+  * @param end maximum value
+  * @param num_parts number of parts
+  */
+ void equalSplit(std::vector<uint>& result, uint start, uint end, uint num_parts);
+ 
  
  
  } // namespace ranger
