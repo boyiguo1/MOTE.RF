@@ -5,19 +5,22 @@
 \title{MOTE}
 \usage{
 MOTE(
-  formula = NULL,
-  data = NULL,
-  num.trees = 500,
-  write.forest = TRUE,
+  x.b,
+  x.e,
+  treat,
+  y.b,
+  y.e,
+  Z,
+  num.trees = 300,
   min.node.size = NULL,
   max.depth = NULL,
+  num.random.splits = 1,
+  minprop = 0.1,
+  write.forest = TRUE,
   replace = TRUE,
   sample.fraction = ifelse(replace, 1, 0.632),
   case.weights = NULL,
   class.weights = NULL,
-  splitrule = NULL,
-  num.random.splits = 1,
-  minprop = 0.1,
   keep.inbag = FALSE,
   inbag = NULL,
   holdout = FALSE,
@@ -26,24 +29,22 @@ MOTE(
   verbose = TRUE,
   seed = NULL,
   dependent.variable.name = NULL,
-  status.variable.name = NULL,
-  x = NULL,
-  y = NULL,
+  trt.variable.name = NULL,
   ...
 )
 }
 \arguments{
-\item{formula}{Object of class \code{formula} or \code{character} describing the model to fit. Interaction terms supported only for numerical variables.}
-
-\item{data}{Training data of class \code{data.frame}, \code{matrix}, \code{dgCMatrix} (Matrix).}
-
 \item{num.trees}{Number of trees.}
-
-\item{write.forest}{Save \code{MOTE.forest} object, required for prediction. Set to \code{FALSE} to reduce memory usage if no prediction intended.}
 
 \item{min.node.size}{Minimal node size. Default 1 for classification, 5 for regression, 3 for survival, and 10 for probability.}
 
 \item{max.depth}{Maximal tree depth. A value of NULL or 0 (the default) corresponds to unlimited depth, 1 to tree stumps (1 split per tree).}
+
+\item{num.random.splits}{For "extratrees" splitrule.: Number of random splits to consider for each candidate splitting variable.}
+
+\item{minprop}{For "maxstat" splitrule: Lower quantile of covariate distribution to be considered for splitting.}
+
+\item{write.forest}{Save \code{MOTE.forest} object, required for prediction. Set to \code{FALSE} to reduce memory usage if no prediction intended.}
 
 \item{replace}{Sample with replacement.}
 
@@ -52,10 +53,6 @@ MOTE(
 \item{case.weights}{Weights for sampling of training observations. Observations with larger weights will be selected with higher probability in the bootstrap (or subsampled) samples for the trees.}
 
 \item{class.weights}{Weights for the outcome classes (in order of the factor levels) in the splitting rule (cost sensitive learning). Classification and probability prediction only. For classification the weights are also applied in the majority vote in terminal nodes.}
-
-\item{num.random.splits}{For "extratrees" splitrule.: Number of random splits to consider for each candidate splitting variable.}
-
-\item{minprop}{For "maxstat" splitrule: Lower quantile of covariate distribution to be considered for splitting.}
 
 \item{keep.inbag}{Save how often observations are in-bag in each tree.}
 
@@ -73,15 +70,19 @@ MOTE(
 
 \item{dependent.variable.name}{Name of dependent variable, needed if no formula given. For survival forests this is the time variable.}
 
-\item{status.variable.name}{Name of status variable, only applicable to survival data and needed if no formula given. Use 1 for event and 0 for censoring.}
+\item{trt.variable.name}{Name of treatment variable. Treatment variable should be a factor variable}
+
+\item{...}{Further arguments passed to or from other methods (currently ignored).}
+
+\item{formula}{Object of class \code{formula} or \code{character} describing the model to fit. Interaction terms supported only for numerical variables.}
+
+\item{data}{Training data of class \code{data.frame}, \code{matrix}, \code{dgCMatrix} (Matrix).}
+
+\item{save.memory}{Use memory saving (but slower) splitting mode. No effect for survival and GWAS data. Warning: This option slows down the tree growing, use only if you encounter memory problems.}
 
 \item{x}{Predictor data (independent variables), alternative interface to data with formula or dependent.variable.name.}
 
 \item{y}{Response vector (dependent variable), alternative interface to data with formula or dependent.variable.name. For survival use a \code{Surv()} object or a matrix with time and status.}
-
-\item{...}{Further arguments passed to or from other methods (currently ignored).}
-
-\item{save.memory}{Use memory saving (but slower) splitting mode. No effect for survival and GWAS data. Warning: This option slows down the tree growing, use only if you encounter memory problems.}
 }
 \value{
 Object of class \code{ranger} with elements
@@ -112,6 +113,7 @@ Note that:
 * The mtry variable that randomly selected variables doesn't exist in our framework, as we are using oblique splitting rules.
 * For factor covriates, a reference coding design matrix will be created accordingly. TODO: it is possible to extend this later by extending to ordered factors.
 * The importance of variables/features are calculated by accumulating the coefficients in the oblique splitting rules weighted by node sample size.
+* The model yet to provide handling of missing value. Data containing missing value can promote computation error and warning.
 
 For a large number of variables and data frames as input data the formula interface can be slow or impossible to use.
 TODO: need improve this part a little bit
@@ -127,8 +129,15 @@ With recent R versions, multithreading on Windows platforms should just work.
 If you compile yourself, the new RTools toolchain is required.
 }
 \examples{
+set.seed(1)
+
+B = create.B(p)
+Z = create.Z(p,q)
+
+sim.dat <- sim_MOTE_data(B = B, Z = Z)
+
 ## Classification forest with default settings
-ranger(Species ~ ., data = iris)
+MOTE(Species ~ ., data = iris)
 
 ## Prediction
 train.idx <- sample(nrow(iris), 2/3 * nrow(iris))
@@ -136,12 +145,7 @@ iris.train <- iris[train.idx, ]
 iris.test <- iris[-train.idx, ]
 rg.iris <- ranger(Species ~ ., data = iris.train)
 pred.iris <- predict(rg.iris, data = iris.test)
-table(iris.test$Species, pred.iris$predictions)
 
-## Quantile regression forest
-rf <- ranger(mpg ~ ., mtcars[1:26, ], quantreg = TRUE)
-pred <- predict(rf, mtcars[27:32, ], type = "quantiles")
-pred$predictions
 
 
 }
