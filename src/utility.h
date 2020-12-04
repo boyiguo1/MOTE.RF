@@ -92,7 +92,19 @@ using namespace arma;
   */
  void equalSplit(std::vector<uint>& result, uint start, uint end, uint num_parts);
  
+ /**
+  * Convert a unsigned integer to string
+  * @param number Number to convert
+  * @return Converted number as string
+  */
+ std::string uintToString(uint number);
  
+ /**
+  * Beautify output of time.
+  * @param seconds Time in seconds
+  * @return Time in days, hours, minutes and seconds as string
+  */
+ std::string beautifyTime(uint seconds);
  
  } // namespace ranger
  

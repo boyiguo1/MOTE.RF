@@ -40,6 +40,9 @@
  const PredictionType DEFAULT_PREDICTIONTYPE = RESPONSE;
  const uint DEFAULT_MIN_NODE_SIZE_REGRESSION = 5;
  
+ // Interval to print progress in seconds
+ const double STATUS_INTERVAL = 30.0;
+ 
  
  
  } // namespace MOTE

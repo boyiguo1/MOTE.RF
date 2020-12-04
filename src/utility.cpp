@@ -125,6 +125,49 @@ void equalSplit(std::vector<uint>& result, uint start, uint end, uint num_parts)
   }
 }
 
+std::string uintToString(uint number) {
+#if WIN_R_BUILD == 1
+  std::stringstream temp;
+  temp << number;
+  return temp.str();
+#else
+  return std::to_string(number);
+#endif
+}
+
+std::string beautifyTime(uint seconds) { // #nocov start
+  std::string result;
+  
+  // Add seconds, minutes, hours, days if larger than zero
+  uint out_seconds = (uint) seconds % 60;
+  result = uintToString(out_seconds) + " seconds";
+  uint out_minutes = (seconds / 60) % 60;
+  if (seconds / 60 == 0) {
+    return result;
+  } else if (out_minutes == 1) {
+    result = "1 minute, " + result;
+  } else {
+    result = uintToString(out_minutes) + " minutes, " + result;
+  }
+  uint out_hours = (seconds / 3600) % 24;
+  if (seconds / 3600 == 0) {
+    return result;
+  } else if (out_hours == 1) {
+    result = "1 hour, " + result;
+  } else {
+    result = uintToString(out_hours) + " hours, " + result;
+  }
+  uint out_days = (seconds / 86400);
+  if (out_days == 0) {
+    return result;
+  } else if (out_days == 1) {
+    result = "1 day, " + result;
+  } else {
+    result = uintToString(out_days) + " days, " + result;
+  }
+  return result;
+} // #nocov end
+
 // NumericVector colMeans(NumericMatrix mat){
 //   int nCols = mat.ncol();
 //   NumericVector out (nCols);
