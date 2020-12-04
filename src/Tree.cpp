@@ -45,17 +45,17 @@
  
  void Tree::init(const Data* data, // uint mtry,
                  size_t num_samples, uint seed, uint min_node_size,
-                 bool sample_with_replacement, bool memory_saving_splitting,
+                 bool sample_with_replacement, //bool memory_saving_splitting,
                  // std::vector<double>* case_weights,
                  std::vector<size_t>* manual_inbag, bool keep_inbag,
-                 std::vector<double>* sample_fraction,  double minprop, //bool holdout,
+                 std::vector<double>* sample_fraction,  double minprop, bool holdout,
                  uint num_random_splits,
                  uint max_depth) {
          
          this->data = data;
          // this->mtry = mtry;
          this->num_samples = num_samples;
-         this->memory_saving_splitting = memory_saving_splitting;
+         // this->memory_saving_splitting = memory_saving_splitting;
          
          // Create root node, assign bootstrap sample and oob samples
          child_nodeIDs.push_back(std::vector<size_t>());
@@ -71,7 +71,7 @@
          this->manual_inbag = manual_inbag;
          this->keep_inbag = keep_inbag;
          this->sample_fraction = sample_fraction;
-         // this->holdout = holdout;
+         this->holdout = holdout;
          this->minprop = minprop;
          this->num_random_splits = num_random_splits;
          this->max_depth = max_depth;

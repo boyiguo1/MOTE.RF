@@ -35,12 +35,13 @@
     Tree(const Tree&) = delete;
     Tree& operator=(const Tree&) = delete;
     
+    // Constructer for a tree, without any computation
     void init(const Data* data, // uint mtry,
               size_t num_samples, uint seed, uint min_node_size,
-              bool sample_with_replacement, bool memory_saving_splitting,
+              bool sample_with_replacement, //bool memory_saving_splitting,
               //std::vector<double>* case_weights, 
               std::vector<size_t>* manual_inbag, bool keep_inbag,
-              std::vector<double>* sample_fraction,  double minprop, //bool holdout,
+              std::vector<double>* sample_fraction,  double minprop, bool holdout, //TODO: do we need holdout
               uint num_random_splits,
               uint max_depth);
     
@@ -117,7 +118,7 @@
     std::vector<size_t> oob_sampleIDs;
     
     // Holdout mode
-    // bool holdout;
+     bool holdout;
     
     // Inbag counts
     bool keep_inbag;
