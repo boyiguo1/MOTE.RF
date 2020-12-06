@@ -85,7 +85,7 @@
    // Grow or predict
    void run(bool verbose, bool compute_oob_error);
    
-   void grow();
+
    // 
    // // Write results to output files
    // void writeOutput();
@@ -161,8 +161,8 @@
    // // }
    // 
  protected:
-   // void grow();
-   // // virtual void growInternal() = 0;
+   void grow();
+   void growInternal();
    // 
    // // Predict using existing tree from file and data as prediction data
    // void predict();
@@ -174,8 +174,8 @@
    // 
    // void computePermutationImportance();
    // 
-   // // Multithreading methods for growing/prediction/importance, called by each thread
-   // void growTreesInThread(uint thread_idx, std::vector<double>* variable_importance);
+   // Multithreading methods for growing/prediction/importance, called by each thread
+   void growTreesInThread(uint thread_idx, vec* variable_importance);
    // void predictTreesInThread(uint thread_idx, const Data* prediction_data, bool oob_prediction);
    // void predictInternalInThread(uint thread_idx);
    // void computeTreePermutationImportanceInThread(uint thread_idx, std::vector<double>& importance,
@@ -264,7 +264,7 @@
    // std::vector<bool> split_varIDs_used;
    
    // Variable importance for all variables in forest
-   std::vector<double> variable_importance;
+   vec variable_importance;
    
    // Casewise variable importance for all variables in forest
    std::vector<double> variable_importance_casewise;

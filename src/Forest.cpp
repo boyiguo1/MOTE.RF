@@ -48,9 +48,9 @@
          
          // Call other init function
          init(// MEM_DOUBLE, 
-              std::move(input_data),  "", num_trees, seed, num_threads, min_node_size,
-              prediction_mode, sample_with_replacement, 
-              predict_all, sample_fraction,  minprop, holdout,  num_random_splits, max_depth);
+                 std::move(input_data),  "", num_trees, seed, num_threads, min_node_size,
+                 prediction_mode, sample_with_replacement, 
+                 predict_all, sample_fraction,  minprop, holdout,  num_random_splits, max_depth);
          
          
          // Set case weights
@@ -68,15 +68,15 @@
          
          // Keep inbag counts
          this->keep_inbag = keep_inbag;
-                        }
+ }
  
  void Forest::init(
-                   std::unique_ptr<Data> input_data, std::string output_prefix,
-                   uint num_trees, uint seed, uint num_threads, uint min_node_size,
-                   bool prediction_mode, bool sample_with_replacement, 
-                    bool predict_all, std::vector<double>& sample_fraction,
-                   double minprop, bool holdout,  uint num_random_splits,
-                   uint max_depth) {
+                 std::unique_ptr<Data> input_data, std::string output_prefix,
+                 uint num_trees, uint seed, uint num_threads, uint min_node_size,
+                 bool prediction_mode, bool sample_with_replacement, 
+                 bool predict_all, std::vector<double>& sample_fraction,
+                 double minprop, bool holdout,  uint num_random_splits,
+                 uint max_depth) {
          
          // Initialize data with memmode
          this->data = std::move(input_data);
@@ -129,7 +129,7 @@
          
          // Set unordered factor variables
          // if (!prediction_mode) {
-                 // data->setIsOrderedVariable(unordered_variable_names);
+         // data->setIsOrderedVariable(unordered_variable_names);
          // }
          
          initInternal();
@@ -238,6 +238,214 @@
          }
  }
  
+ void Forest::grow() {
+         
+         // Create thread ranges
+         equalSplit(thread_ranges, 0, num_trees - 1, num_threads);
+         
+         // Call special grow functions of subclasses. There trees must be created.
+         growInternal();
+         
+         // Init trees, create a seed for each tree, based on main seed
+         std::uniform_int_distribution<uint> udist;
+         for (size_t i = 0; i < num_trees; ++i) {
+                 uint tree_seed;
+                 if (seed == 0) {
+                         tree_seed = udist(random_number_generator);
+                 } else {
+                         tree_seed = (i + 1) * seed;
+                 }
+                 
+                 // B: not using split_select_weights
+                 // TODO: delete this
+                 // Get split select weights for tree
+                 // std::vector<double>* tree_split_select_weights;
+                 // if (split_select_weights.size() > 1) {
+                 //         tree_split_select_weights = &split_select_weights[i];
+                 // } else {
+                 //         tree_split_select_weights = &split_select_weights[0];
+                 // }
+                 
+                 // Get inbag counts for tree
+                 std::vector<size_t>* tree_manual_inbag;
+                 if (manual_inbag.size() > 1) {
+                         tree_manual_inbag = &manual_inbag[i];
+                 } else {
+                         tree_manual_inbag = &manual_inbag[0];
+                 }
+                 trees[i]->init(data.get(), num_samples, tree_seed, min_node_size,
+                                sample_with_replacement, //memory_saving_splitting, 
+                                // TODO: do we need case_weights?
+                                // &case_weights,
+                                tree_manual_inbag, keep_inbag,
+                                &sample_fraction, minprop, holdout, num_random_splits, max_depth);
+         }
+         
+         // Init variable importance
+         // variable_importance.resize(num_independent_variables, 0);
+         variable_importance = vec(num_independent_variables, fill::zeros);
+         
+         // Grow trees in multiple threads
+#ifdef OLD_WIN_R_BUILD
+         // #nocov start
+         progress = 0;
+         clock_t start_time = clock();
+         clock_t lap_time = clock();
+         for (size_t i = 0; i < num_trees; ++i) {
+                 trees[i]->grow(&variable_importance);
+                 progress++;
+                 showProgress("Growing trees..", start_time, lap_time);
+         }
+         // #nocov end
+#else
+         progress = 0;
+#ifdef R_BUILD
+         aborted = false;
+         aborted_threads = 0;
+#endif
+         
+         std::vector<std::thread> threads;
+         threads.reserve(num_threads);
+         
+         // Initialize importance per thread
+         std::vector<vec> variable_importance_threads(num_threads);
+         
+         for (uint i = 0; i < num_threads; ++i) {
+                 // TODO: Do I need to create for each one
+                 // Yes I need
+                 // if (importance_mode == IMP_GINI || importance_mode == IMP_GINI_CORRECTED || importance_mode == IMP_GINI_OOB) {
+                 variable_importance_threads[i] = vec(num_independent_variables, fill::zeros);
+                 // }
+                 threads.emplace_back(&Forest::growTreesInThread, this, i, &(variable_importance_threads[i]));
+         }
+         showProgress("Growing trees..", num_trees);
+         for (auto &thread : threads) {
+                 thread.join();
+         }
+         
+#ifdef R_BUILD
+         if (aborted_threads > 0) {
+                 throw std::runtime_error("User interrupt.");
+         }
+#endif
+         
+         Sum thread importances
+         //          if (importance_mode == IMP_GINI || importance_mode == IMP_GINI_CORRECTED || importance_mode == IMP_GINI_OOB) {
+                          variable_importance = vec(num_independent_variables, fill::zeros);
+                          for (size_t i = 0; i < num_independent_variables; ++i) {
+                                  for (uint j = 0; j < num_threads; ++j) {
+                                          variable_importance[i] += variable_importance_threads[j][i];
+                                  }
+                          }
+         // TODO: remove useless vec
+         //                  variable_importance_threads.clear();
+                  }
+         
+#endif
+         //          
+         //          // Divide importance by number of trees
+         //          if (importance_mode == IMP_GINI || importance_mode == IMP_GINI_CORRECTED || importance_mode == IMP_GINI_OOB) {
+         //                  for (auto& v : variable_importance) {
+         //                          v /= num_trees;
+         //                  }
+         //          }
+ }
+ 
+ // TODO: merge back to the main function
+ void Forest::growInternal() {
+         trees.reserve(num_trees);
+         for (size_t i = 0; i < num_trees; ++i) {
+                 trees.push_back(make_unique<Tree>());
+         }
+ }
+ 
+ 
+#ifndef OLD_WIN_R_BUILD
+ // TODO: change variable_important to Vec * if keeping
+ void Forest::growTreesInThread(uint thread_idx, vec* variable_importance) {
+         if (thread_ranges.size() > thread_idx + 1) {
+                 for (size_t i = thread_ranges[thread_idx]; i < thread_ranges[thread_idx + 1]; ++i) {
+                         trees[i]->grow(variable_importance);
+                         
+                         // Check for user interrupt
+#ifdef R_BUILD
+                         if (aborted) {
+                                 std::unique_lock<std::mutex> lock(mutex);
+                                 ++aborted_threads;
+                                 condition_variable.notify_one();
+                                 return;
+                         }
+#endif
+                         
+                         // Increase progress by 1 tree
+                         std::unique_lock<std::mutex> lock(mutex);
+                         ++progress;
+                         condition_variable.notify_one();
+                 }
+         }
+ }
+#endif
+ 
+#ifdef OLD_WIN_R_BUILD
+ // #nocov start
+ void Forest::showProgress(std::string operation, clock_t start_time, clock_t& lap_time) {
+         
+         // Check for user interrupt
+         if (checkInterrupt()) {
+                 throw std::runtime_error("User interrupt.");
+         }
+         
+         double elapsed_time = (clock() - lap_time) / CLOCKS_PER_SEC;
+         if (elapsed_time > STATUS_INTERVAL) {
+                 double relative_progress = (double) progress / (double) num_trees;
+                 double time_from_start = (clock() - start_time) / CLOCKS_PER_SEC;
+                 uint remaining_time = (1 / relative_progress - 1) * time_from_start;
+                 if (verbose_out) {
+                         *verbose_out << operation << " Progress: " << round(100 * relative_progress)
+                                      << "%. Estimated remaining time: " << beautifyTime(remaining_time) << "." << std::endl;
+                 }
+                 lap_time = clock();
+         }
+ }
+ // #nocov end
+#else
+ void Forest::showProgress(std::string operation, size_t max_progress) {
+         using std::chrono::steady_clock;
+         using std::chrono::duration_cast;
+         using std::chrono::seconds;
+         
+         steady_clock::time_point start_time = steady_clock::now();
+         steady_clock::time_point last_time = steady_clock::now();
+         std::unique_lock<std::mutex> lock(mutex);
+         
+         // Wait for message from threads and show output if enough time elapsed
+         while (progress < max_progress) {
+                 condition_variable.wait(lock);
+                 seconds elapsed_time = duration_cast<seconds>(steady_clock::now() - last_time);
+                 
+                 // Check for user interrupt
+#ifdef R_BUILD
+                 if (!aborted && checkInterrupt()) {
+                         aborted = true;
+                 }
+                 if (aborted && aborted_threads >= num_threads) {
+                         return;
+                 }
+#endif
+                 
+                 if (progress > 0 && elapsed_time.count() > STATUS_INTERVAL) {
+                         double relative_progress = (double) progress / (double) max_progress;
+                         seconds time_from_start = duration_cast<seconds>(steady_clock::now() - start_time);
+                         uint remaining_time = (1 / relative_progress - 1) * time_from_start.count();
+                         if (verbose_out) {
+                                 *verbose_out << operation << " Progress: " << round(100 * relative_progress) << "%. Estimated remaining time: "
+                                              << beautifyTime(remaining_time) << "." << std::endl;
+                         }
+                         last_time = steady_clock::now();
+                 }
+         }
+ }
+#endif
  
  } // namespace MOTE
  

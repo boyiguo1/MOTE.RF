@@ -207,6 +207,7 @@
      // Run Ranger
      forest->run(false, oob_error);
      
+     // TODO: Don't needs this
      // if (use_split_select_weights && importance_mode != IMP_NONE) {
      //   if (verbose_out) {
      //     *verbose_out
@@ -216,6 +217,7 @@
      // }
      
      // Use first non-empty dimension of predictions
+     // TODO: need to change
      // const std::vector<std::vector<std::vector<double>>>& predictions = forest->getPredictions();
      // if (predictions.size() == 1) {
      //   if (predictions[0].size() == 1) {
@@ -227,38 +229,42 @@
      //   result.push_back(forest->getPredictions(), "predictions");
      // }
      // 
-     // // Return output
-     // result.push_back(forest->getNumTrees(), "num.trees");
-     // result.push_back(forest->getNumIndependentVariables(), "num.independent.variables");
+     // Return output
+     result.push_back(forest->getNumTrees(), "num.trees");
+     result.push_back(forest->getNumIndependentVariables(), "num.independent.variables");
+     // TODO: don't need this
      // if (treetype == TREE_SURVIVAL) {
      //   auto& temp = dynamic_cast<ForestSurvival&>(*forest);
      //   result.push_back(temp.getUniqueTimepoints(), "unique.death.times");
      // }
-     // if (!prediction_mode) {
-     //   result.push_back(forest->getMtry(), "mtry");
-     //   result.push_back(forest->getMinNodeSize(), "min.node.size");
+     if (!prediction_mode) {
+     //   result.push_back(forest->getMtry(), "mtry");      // TODO: don't need mtry
+       result.push_back(forest->getMinNodeSize(), "min.node.size");
      //   if (importance_mode != IMP_NONE) {
-     //     result.push_back(forest->getVariableImportance(), "variable.importance");
+         result.push_back(forest->getVariableImportance(), "variable.importance");
      //     if (importance_mode == IMP_PERM_CASEWISE) {
      //       result.push_back(forest->getVariableImportanceCasewise(), "variable.importance.local");
      //     }
      //   }
+     // TODO: expand this function
      //   result.push_back(forest->getOverallPredictionError(), "prediction.error");
-     // }
+     }
      // 
-     // if (keep_inbag) {
-     //   result.push_back(forest->getInbagCounts(), "inbag.counts");
-     // }
+     if (keep_inbag) {
+       result.push_back(forest->getInbagCounts(), "inbag.counts");
+     }
      // 
-     // // Save forest if needed
-     // if (write_forest) {
-     //   Rcpp::List forest_object;
-     //   forest_object.push_back(forest->getNumTrees(), "num.trees");
+     // Save forest if needed
+     if (write_forest) {
+       Rcpp::List forest_object;
+       forest_object.push_back(forest->getNumTrees(), "num.trees");
+       // TODO: customize to accomadate to our forest structure
      //   forest_object.push_back(forest->getChildNodeIDs(), "child.nodeIDs");
      //   forest_object.push_back(forest->getSplitVarIDs(), "split.varIDs");
      //   forest_object.push_back(forest->getSplitValues(), "split.values");
      //   forest_object.push_back(forest->getIsOrderedVariable(), "is.ordered");
-     //   
+     // 
+     // TODO: don't need this
      //   if (snp_data.nrow() > 1 && order_snps) {
      //     // Exclude permuted SNPs (if any)
      //     std::vector<std::vector<size_t>> snp_order = forest->getSnpOrder();
@@ -277,12 +283,12 @@
      //     forest_object.push_back(temp.getChf(), "chf");
      //     forest_object.push_back(temp.getUniqueTimepoints(), "unique.death.times");
      //   }
-     //   result.push_back(forest_object, "forest");
-     // }
-     // 
-     // if (!verbose) {
-     //   delete verbose_out;
-     // }
+       result.push_back(forest_object, "forest");
+     }
+
+     if (!verbose) {
+       delete verbose_out;
+     }
    } catch (std::exception& e) {
      if (strcmp(e.what(), "User interrupt.") != 0) {
        Rcpp::Rcerr << "Error: " << e.what() << " Ranger will EXIT now." << std::endl;
