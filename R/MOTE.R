@@ -192,14 +192,6 @@ MOTE <- function(#formula = NULL, data = NULL,
   #   stop("Missing data in dependent variable.", call. = FALSE)
   # }
   
-  ## Check response levels
-  # if (is.factor(y)) {
-  #   if (nlevels(y) != nlevels(droplevels(y))) {
-  #     dropped_levels <- setdiff(levels(y), levels(droplevels(y)))
-  #     warning("Dropped unused factor level(s) in dependent variable: ",
-  #             paste0(dropped_levels, collapse = ", "), ".", call. = FALSE)
-  #   }
-  # }
   
   if(!all(is.matrix(x.b), is.matrix(x.e), is.matrix(y.b), is.matrix(y.e)))
     stop("Error Message: x.b, x.e, y.b, y.e must be numeric matrices")
@@ -223,23 +215,8 @@ MOTE <- function(#formula = NULL, data = NULL,
     stop("Error Message: Incorrect number of treatment groups. Must be 2 groups")
   trt.lvl <- levels(treat)
   
-  independent.variable.names <- colnames(x.b)
+
   
-  ## Handle of Char variables & Factor Varibles
-  # if (!is.matrix(x) && !inherits(x, "Matrix") && ncol(x) > 0) {
-  #   character.idx <- sapply(x, is.character)
-  #   ## Recode characters only
-  #   x[character.idx] <- lapply(x[character.idx], factor)
-  # }
-  
-  
-  all.independent.variable.names <- independent.variable.names
-  
-  ## Error if no covariates
-  # TODO: examine if this step is necessary
-  # if (length(all.independent.variable.names) < 1) {
-  #   stop("Error: No covariates found.")
-  # }
   
   ## Number of trees
   if (!is.numeric(num.trees) || num.trees < 1) {
@@ -266,7 +243,6 @@ MOTE <- function(#formula = NULL, data = NULL,
   }
   
   ## Minumum node size
-  ## TODO: match this with dimension
   if (is.null(min.node.size)) {
     min.node.size <- 0
   } else if (!is.numeric(min.node.size) || min.node.size < 0) {
@@ -282,8 +258,6 @@ MOTE <- function(#formula = NULL, data = NULL,
   
   ## Sample fraction
   # TODO: need to figure out how sample.fraction works
-  # This should be corresponding to the proportion of treatments
-  # TODO: force the sample.fraction to be length 2 regardless of what
   if (!is.numeric(sample.fraction)) {
     stop("Error: Invalid value for sample.fraction. Please give a value in (0,1] or a vector of values in [0,1].")
   }
@@ -294,7 +268,6 @@ MOTE <- function(#formula = NULL, data = NULL,
     if (sum(sample.fraction) <= 0) {
       stop("Error: Invalid value for sample.fraction. Sum of values must be >0.")
     }
-    #TODO: makes this alight with treatment values
     if (length(sample.fraction) != nlevels(treat)) {
       stop("Error: Invalid value for sample.fraction. Expecting ", nlevels(treat), " values, provided ", length(sample.fraction), ".")
     }
@@ -391,35 +364,18 @@ MOTE <- function(#formula = NULL, data = NULL,
   ## No loaded forest object
   loaded.forest <- list()
   
-  ## Use sparse matrix
-  # if (inherits(x, "dgCMatrix")) {
-  #   sparse.x <- x
-  #   x <- matrix(c(0, 0))
-  #   use.sparse.data <- TRUE
-  # } else {
-  #   sparse.x <- Matrix(matrix(c(0, 0)))
-  #   use.sparse.data <- FALSE
-  #   if (is.data.frame(x.b)) {
-  #     x.b <- data.matrix(x.b)
-  #   }
-  # }
-  
-  
-  # y.mat <- as.matrix(as.numeric(y))
-  
-  debug.break <- TRUE
-  
   x.b.new <- cbind(x.b, Z)
   x.diff <- x.e - x.b
   independent.variable.names <- colnames(x.b.new)
   if(is.null(independent.variable.names))
     independent.variable.names <- paste0("Var", seq(1, ncol(x.b.new)))
   
+  all.independent.variable.names <- independent.variable.names
+  
   ## Call MOTE
   ## TODO: implement MOTECPP
   result <- MOTECpp(  x.b.new, x.diff,
                       y.e-y.b,
-                      # y.b, y.e,
                       treat,
                       # Z,    
                     independent.variable.names, 
