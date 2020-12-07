@@ -119,9 +119,9 @@
    //   // }
    //   // return result;
    // }
-   // const std::vector<double>& getVariableImportance() const {
-   //   return variable_importance;
-   // }
+   const vec& getVariableImportance() const {
+     return variable_importance;
+   }
    // const std::vector<double>& getVariableImportanceCasewise() const {
    //   return variable_importance_casewise;
    // }
@@ -131,30 +131,31 @@
    // const std::vector<std::vector<std::vector<double>>>& getPredictions() const {
    //   return predictions;
    // }
-   // size_t getNumTrees() const {
-   //   return num_trees;
-   // }
+   size_t getNumTrees() const {
+     return num_trees;
+   }
    // // uint getMtry() const {
    // //   return mtry;
    // // }
-   // uint getMinNodeSize() const {
-   //   return min_node_size;
-   // }
-   // size_t getNumIndependentVariables() const {
-   //   return num_independent_variables;
-   // }
+   uint getMinNodeSize() const {
+     return min_node_size;
+   }
+   size_t getNumIndependentVariables() const {
+     return num_independent_variables;
+   }
    // 
    // // const std::vector<bool>& getIsOrderedVariable() const {
    // //   return data->getIsOrderedVariable();
    // // }
    // 
-   // std::vector<std::vector<size_t>> getInbagCounts() const {
-   //   // std::vector<std::vector<size_t>> result;
-   //   // for (auto& tree : trees) {
-   //   //   result.push_back(tree->getInbagCounts());
-   //   // }
-   //   // return result;
-   // }
+   std::vector<std::vector<size_t>> getInbagCounts() const {
+      // TODO: what is this inbag counts?
+     // std::vector<std::vector<size_t>> result;
+     // for (auto& tree : trees) {
+     //   result.push_back(tree->getInbagCounts());
+     // }
+     // return result;
+   }
    // 
    // // const std::vector<std::vector<size_t>>& getSnpOrder() const {
    // //   // return data->getSnpOrder();

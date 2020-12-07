@@ -329,17 +329,17 @@
          }
 #endif
          
-         Sum thread importances
+         // Sum thread importances
          //          if (importance_mode == IMP_GINI || importance_mode == IMP_GINI_CORRECTED || importance_mode == IMP_GINI_OOB) {
-                          variable_importance = vec(num_independent_variables, fill::zeros);
-                          for (size_t i = 0; i < num_independent_variables; ++i) {
-                                  for (uint j = 0; j < num_threads; ++j) {
-                                          variable_importance[i] += variable_importance_threads[j][i];
-                                  }
-                          }
+         variable_importance = vec(num_independent_variables, fill::zeros);
+         for (size_t i = 0; i < num_independent_variables; ++i) {
+                 for (uint j = 0; j < num_threads; ++j) {
+                         variable_importance[i] += variable_importance_threads[j][i];
+                 }
+         }
          // TODO: remove useless vec
          //                  variable_importance_threads.clear();
-                  }
+         // }
          
 #endif
          //          
