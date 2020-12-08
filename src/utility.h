@@ -31,11 +31,11 @@
 #include "globals.h"
 #include "Data.h"
  
-// #include <Rcpp.h>
+ // #include <Rcpp.h>
  using namespace Rcpp;
-
+ 
 #include <RcppArmadillo.h>
-using namespace arma;
+ using namespace arma;
  
  namespace MOTE {
  
@@ -105,6 +105,17 @@ using namespace arma;
   * @return Time in days, hours, minutes and seconds as string
   */
  std::string beautifyTime(uint seconds);
+ 
+ // User interrupt from R
+#ifdef R_BUILD
+ static void chkIntFn(void *dummy) {
+   R_CheckUserInterrupt();
+ }
+ 
+ inline bool checkInterrupt() {
+   return (R_ToplevelExec(chkIntFn, NULL) == FALSE);
+ }
+#endif
  
  } // namespace ranger
  
