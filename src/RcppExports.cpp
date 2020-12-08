@@ -8,8 +8,8 @@
 using namespace Rcpp;
 
 // MOTECpp
-Rcpp::List MOTECpp(arma::mat& x_b, arma::mat& x_diff, arma::mat& y_diff, arma::vec trt, std::vector<std::string> variable_names, uint num_trees, bool verbose, uint seed, uint num_threads, bool write_forest, uint min_node_size, bool prediction_mode, Rcpp::List loaded_forest, bool sample_with_replacement, std::vector<double>& case_weights, bool use_case_weights, std::vector<double>& class_weights, bool predict_all, bool keep_inbag, std::vector<double>& sample_fraction, double minprop, bool holdout, uint num_random_splits, bool oob_error, uint max_depth, std::vector<std::vector<size_t>>& inbag, bool use_inbag);
-RcppExport SEXP _MOTE_RF_MOTECpp(SEXP x_bSEXP, SEXP x_diffSEXP, SEXP y_diffSEXP, SEXP trtSEXP, SEXP variable_namesSEXP, SEXP num_treesSEXP, SEXP verboseSEXP, SEXP seedSEXP, SEXP num_threadsSEXP, SEXP write_forestSEXP, SEXP min_node_sizeSEXP, SEXP prediction_modeSEXP, SEXP loaded_forestSEXP, SEXP sample_with_replacementSEXP, SEXP case_weightsSEXP, SEXP use_case_weightsSEXP, SEXP class_weightsSEXP, SEXP predict_allSEXP, SEXP keep_inbagSEXP, SEXP sample_fractionSEXP, SEXP minpropSEXP, SEXP holdoutSEXP, SEXP num_random_splitsSEXP, SEXP oob_errorSEXP, SEXP max_depthSEXP, SEXP inbagSEXP, SEXP use_inbagSEXP) {
+Rcpp::List MOTECpp(arma::mat& x_b, arma::mat& x_diff, arma::mat& y_diff, arma::vec trt, std::vector<std::string> variable_names, uint num_trees, bool verbose, uint seed, uint num_threads, bool write_forest, uint min_node_size, bool prediction_mode, Rcpp::List loaded_forest, bool sample_with_replacement, std::vector<double>& class_weights, bool predict_all, bool keep_inbag, std::vector<double>& sample_fraction, double minprop, bool holdout, uint num_random_splits, bool oob_error, uint max_depth, std::vector<std::vector<size_t>>& inbag, bool use_inbag);
+RcppExport SEXP _MOTE_RF_MOTECpp(SEXP x_bSEXP, SEXP x_diffSEXP, SEXP y_diffSEXP, SEXP trtSEXP, SEXP variable_namesSEXP, SEXP num_treesSEXP, SEXP verboseSEXP, SEXP seedSEXP, SEXP num_threadsSEXP, SEXP write_forestSEXP, SEXP min_node_sizeSEXP, SEXP prediction_modeSEXP, SEXP loaded_forestSEXP, SEXP sample_with_replacementSEXP, SEXP class_weightsSEXP, SEXP predict_allSEXP, SEXP keep_inbagSEXP, SEXP sample_fractionSEXP, SEXP minpropSEXP, SEXP holdoutSEXP, SEXP num_random_splitsSEXP, SEXP oob_errorSEXP, SEXP max_depthSEXP, SEXP inbagSEXP, SEXP use_inbagSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -27,8 +27,6 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< bool >::type prediction_mode(prediction_modeSEXP);
     Rcpp::traits::input_parameter< Rcpp::List >::type loaded_forest(loaded_forestSEXP);
     Rcpp::traits::input_parameter< bool >::type sample_with_replacement(sample_with_replacementSEXP);
-    Rcpp::traits::input_parameter< std::vector<double>& >::type case_weights(case_weightsSEXP);
-    Rcpp::traits::input_parameter< bool >::type use_case_weights(use_case_weightsSEXP);
     Rcpp::traits::input_parameter< std::vector<double>& >::type class_weights(class_weightsSEXP);
     Rcpp::traits::input_parameter< bool >::type predict_all(predict_allSEXP);
     Rcpp::traits::input_parameter< bool >::type keep_inbag(keep_inbagSEXP);
@@ -40,13 +38,13 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< uint >::type max_depth(max_depthSEXP);
     Rcpp::traits::input_parameter< std::vector<std::vector<size_t>>& >::type inbag(inbagSEXP);
     Rcpp::traits::input_parameter< bool >::type use_inbag(use_inbagSEXP);
-    rcpp_result_gen = Rcpp::wrap(MOTECpp(x_b, x_diff, y_diff, trt, variable_names, num_trees, verbose, seed, num_threads, write_forest, min_node_size, prediction_mode, loaded_forest, sample_with_replacement, case_weights, use_case_weights, class_weights, predict_all, keep_inbag, sample_fraction, minprop, holdout, num_random_splits, oob_error, max_depth, inbag, use_inbag));
+    rcpp_result_gen = Rcpp::wrap(MOTECpp(x_b, x_diff, y_diff, trt, variable_names, num_trees, verbose, seed, num_threads, write_forest, min_node_size, prediction_mode, loaded_forest, sample_with_replacement, class_weights, predict_all, keep_inbag, sample_fraction, minprop, holdout, num_random_splits, oob_error, max_depth, inbag, use_inbag));
     return rcpp_result_gen;
 END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_MOTE_RF_MOTECpp", (DL_FUNC) &_MOTE_RF_MOTECpp, 27},
+    {"_MOTE_RF_MOTECpp", (DL_FUNC) &_MOTE_RF_MOTECpp, 25},
     {NULL, NULL, 0}
 };
 

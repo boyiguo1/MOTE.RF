@@ -19,7 +19,6 @@ MOTE(
   write.forest = TRUE,
   replace = TRUE,
   sample.fraction = ifelse(replace, 1, 0.632),
-  case.weights = NULL,
   class.weights = NULL,
   keep.inbag = FALSE,
   inbag = NULL,
@@ -49,8 +48,6 @@ MOTE(
 \item{replace}{Sample with replacement.}
 
 \item{sample.fraction}{Fraction of observations to sample. Default is 1 for sampling with replacement and 0.632 for sampling without replacement. For classification, this can be a vector of class-specific values.}
-
-\item{case.weights}{Weights for sampling of training observations. Observations with larger weights will be selected with higher probability in the bootstrap (or subsampled) samples for the trees.}
 
 \item{class.weights}{Weights for the outcome classes (in order of the factor levels) in the splitting rule (cost sensitive learning). Classification and probability prediction only. For classification the weights are also applied in the majority vote in terminal nodes.}
 
@@ -122,6 +119,7 @@ Use \code{x} and \code{y} with a matrix for \code{x} to avoid conversions and sa
 
 TODO: 
 Since our algorithm is oriented to analyze microbiome data, we can directly use phyloseq object.
+Case weights is not supported temporarily
 
 See \url{https://github.com/boyiguo1/MOTE.RF} for the development version.
 
