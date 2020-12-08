@@ -150,12 +150,12 @@
    // // }
    // 
    std::vector<std::vector<size_t>> getInbagCounts() const {
-      // TODO: what is this inbag counts?
-     // std::vector<std::vector<size_t>> result;
-     // for (auto& tree : trees) {
-     //   result.push_back(tree->getInbagCounts());
-     // }
-     // return result;
+     // TODO: what is this inbag counts?
+     std::vector<std::vector<size_t>> result;
+     for (auto& tree : trees) {
+       result.push_back(tree->getInbagCounts());
+     }
+     return result;
    }
    // 
    // // const std::vector<std::vector<size_t>>& getSnpOrder() const {

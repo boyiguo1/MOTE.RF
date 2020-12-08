@@ -51,6 +51,18 @@
     void predict(const Data* prediction_data, bool oob_prediction);
     
     
+    // Getter functions
+    const std::vector<size_t>& getOobSampleIDs() const {
+        return oob_sampleIDs;
+    }
+    size_t getNumSamplesOob() const {
+        return num_samples_oob;
+    }
+    const std::vector<size_t>& getInbagCounts() const {
+        return inbag_counts;
+    }
+    
+    
  protected:
     
     void createEmptyNode();
@@ -62,6 +74,7 @@
     void setManualInbag();
     
     // Clean up functions
+    // TODO: seems useless function and be removed
     void cleanUpInternal();
     
     // Function to make splits
