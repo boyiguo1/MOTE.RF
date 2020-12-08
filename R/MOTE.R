@@ -374,13 +374,11 @@ MOTE <- function(#formula = NULL, data = NULL,
   all.independent.variable.names <- independent.variable.names
   
   treat_num <- ifelse(treat==trt.lvl[1], 1, -1)
+  
   ## Call MOTE
-  ## TODO: implement MOTECPP
   result <- MOTECpp(  x.b.new, x.diff,
                       y.e-y.b,
-                      # TODO: make this numeric: 1, -1
                       treat_num,
-                      # Z,    
                     independent.variable.names, 
                     num.trees, verbose, seed, num.threads, write.forest, min.node.size,
                     prediction.mode,  loaded.forest, 

@@ -13,7 +13,9 @@
 #define DATA_H_
  
 #include <vector>
-// #include <iostream>
+#include <iostream>
+#include <exception>
+ 
 // #include <numeric>
 // #include <random>
 // #include <algorithm>
@@ -54,6 +56,11 @@ using namespace arma;
      this->y_diff = y_diff;
      // this ->Z = Z;
      this->trt = trt;
+     
+     // Debug line: if trt could only contains two values
+     if(!all((trt==1) || (trt==-1)))
+       throw std::runtime_error("Trt must be either 1 or -1");
+     
      this->variable_names = variable_names;
      this->num_rows = num_rows;
      this->num_cols = num_cols;
@@ -70,6 +77,10 @@ using namespace arma;
    
    size_t getNumCols() const {
       return num_cols;
+   }
+   
+   vec get_trt() const {
+      return trt;
    }
    
    vec get_trt(uvec pos) const {
