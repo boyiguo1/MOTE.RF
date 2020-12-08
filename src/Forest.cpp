@@ -67,33 +67,7 @@
                  this->manual_inbag = manual_inbag;
          }
          
-         // create class value and class ID
-         // TODO: 
-         // if (!prediction_mode) {
-         //         for (size_t i = 0; i < num_samples; ++i) {
-         //                 double value = data->get_trt(i, 0);
-         //                 
-         //                 // If classID is already in class_values, use ID. Else create a new one.
-         //                 uint classID = find(class_values.begin(), class_values.end(), value) - class_values.begin();
-         //                 if (classID == class_values.size()) {
-         //                         class_values.push_back(value);
-         //                 }
-         //                 response_classIDs.push_back(classID);
-         //         }
-         // }
-         
-         // Create sampleIDs_per_class i.e. trtment
-         // if (sample_fraction.size() > 1) {
-         //         sampleIDs_per_class.resize(sample_fraction.size());
-         //         for (auto& v : sampleIDs_per_class) {
-         //                 v.reserve(num_samples);
-         //         }
-         //         for (size_t i = 0; i < num_samples; ++i) {
-         //                 // Somehow, change this to trt levels_num of 0, 1s
-         //                 size_t classID = response_classIDs[i];
-         //                 sampleIDs_per_class[classID].push_back(i);
-         //         }
-         // }
+ 
          
          // Keep inbag counts
          this->keep_inbag = keep_inbag;
@@ -208,6 +182,47 @@
                  min_node_size = DEFAULT_MIN_NODE_SIZE_REGRESSION;
          }
          
+         
+         // create class value and class ID
+         // TODO: TO DELTE
+         // if (!prediction_mode) {
+         //         for (size_t i = 0; i < num_samples; ++i) {
+         //                 double value = data->get_trt(i, 0);
+         //                 
+         //                 // If classID is already in class_values, use ID. Else create a new one.
+         //                 uint classID = find(class_values.begin(), class_values.end(), value) - class_values.begin();
+         //                 if (classID == class_values.size()) {
+         //                         class_values.push_back(value);
+         //                 }
+         //                 response_classIDs.push_back(classID);
+         //         }
+         // }
+         
+         
+         // Hard code for creation of sampleIDs_per_class
+         vec tmp_trt = data->get_trt();
+         uvec idx_1 = find(tmp_trt==1); // Indices for trtment lvl 1 (ref level)
+         uvec idx_2 = find(tmp_trt==-1); // Indices for trtment lvl 2
+         
+         sampleIDs_per_class.resize(sample_fraction.size());   // How to be 2
+         
+         sampleIDs_per_class[0] = conv_to<std::vector<size_t>>::from(idx_1);
+         sampleIDs_per_class[1] =  conv_to<std::vector<size_t>>::from(idx_2);       
+         
+         // Create sampleIDs_per_class i.e. trtment
+         // if (sample_fraction.size() > 1) {
+         //         sampleIDs_per_class.resize(sample_fraction.size());
+         //         for (auto& v : sampleIDs_per_class) {
+         //                 v.reserve(num_samples);
+         //         }
+         //         for (size_t i = 0; i < num_samples; ++i) {
+         //                 // Somehow, change this to trt levels_num of 0, 1s
+         //                 size_t classID = response_classIDs[i];
+         //                 sampleIDs_per_class[classID].push_back(i);
+         //         }
+         // }
+         
+         // TODO: Delete this section
          // Error if beta splitrule used with data outside of [0,1]
          // if (splitrule == BETA && !prediction_mode) {
          //         for (size_t i = 0; i < num_samples; ++i) {
@@ -293,6 +308,7 @@
                                 sample_with_replacement, //memory_saving_splitting, 
                                 // TODO: do we need case_weights?
                                 // &case_weights,
+                                &sampleIDs_per_class,
                                 tree_manual_inbag, keep_inbag,
                                 &sample_fraction, minprop, holdout, num_random_splits, max_depth);
          }

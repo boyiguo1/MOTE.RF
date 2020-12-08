@@ -40,6 +40,7 @@
               size_t num_samples, uint seed, uint min_node_size,
               bool sample_with_replacement, //bool memory_saving_splitting,
               //std::vector<double>* case_weights, 
+              const std::vector<std::vector<size_t>>* sampleIDs_per_class,
               std::vector<size_t>* manual_inbag, bool keep_inbag,
               std::vector<double>* sample_fraction,  double minprop, bool holdout, //TODO: do we need holdout
               uint num_random_splits,

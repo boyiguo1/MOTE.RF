@@ -47,6 +47,7 @@
                  size_t num_samples, uint seed, uint min_node_size,
                  bool sample_with_replacement, //bool memory_saving_splitting,
                  // std::vector<double>* case_weights,
+                 const std::vector<std::vector<size_t>>* sampleIDs_per_class,
                  std::vector<size_t>* manual_inbag, bool keep_inbag,
                  std::vector<double>* sample_fraction,  double minprop, bool holdout,
                  uint num_random_splits,
@@ -55,6 +56,7 @@
          this->data = data;
          // this->mtry = mtry;
          this->num_samples = num_samples;
+         this->sampleIDs_per_class = sampleIDs_per_class;;
          // this->memory_saving_splitting = memory_saving_splitting;
          
          // Create root node, assign bootstrap sample and oob samples
@@ -79,15 +81,15 @@
  
  void Tree::grow(vec* variable_importance) {
          Rcpp::Rcout << "Start tree::grow" << std::endl;        // Debug Line
-         // // Allocate memory for tree growing
+
+         // Allocate memory for tree growing
          // TODO: figure out what to do with this
-         // allocateMemory();
-         // 
-         // TODO: to think if we need to update something when grwoing the tree
+         // allocateMemory();           // I don't think this is necessary
+
          this->variable_importance = variable_importance;
-         // 
-         // // Bootstrap, dependent if weighted or not and with or without replacement
-         // ?? Could implement in the future where the sampling weights are reflected in the equation
+
+         // Bootstrap, dependent if weighted or not and with or without replacement
+         // NOTE: Could implement in the future
          // if (!case_weights->empty()) {
          //         if (sample_with_replacement) {
          //                 bootstrapWeighted();
@@ -96,26 +98,21 @@
          //         }
          // } 
          
-         
-         // TODO: makes sample_fraction to length of 2 in R parts
-         // if(sample_fraction->size() ==1) {
-         //         double fraction;
-         //         fraction = (*sample_fraction)[0];
-         //         sample_fraction->push_back(fraction);
-         // }
-         
          if(sample_fraction->size() !=2) {
-                 throw "sample.fraction must contains only 2 elements";
+                 throw std::runtime_error("sample_fraction must contains only 2 elements");
          }
 
-         Rcpp::Rcout << "Start tree::bootstrap" << std::endl;        // Debug Line         
+
          if (!manual_inbag->empty()) {
+                 // TODO: Need to debug
                  setManualInbag();
          } else {
                  if (sample_with_replacement) {
                          Rcpp::Rcout << "Start tree::bootstrapClassWise" << std::endl;        // Debug Line    
                          bootstrapClassWise();
                  } else {
+                         // TODO: Need to debug
+                         Rcpp::Rcout << "Start tree::bootstrapWithoutReplacementClassWise" << std::endl;        // Debug Line         
                          bootstrapWithoutReplacementClassWise();
                  }
          }

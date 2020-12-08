@@ -249,7 +249,7 @@
    // std::vector<std::vector<double>> split_select_weights;
    
    // Bootstrap weights
-   std::vector<std::vector<size_t>> sampleIDs_per_class;
+   std::vector<std::vector<size_t>> sampleIDs_per_class;    //Class refers to treatment levels
    // std::vector<double> case_weights;
    
    // Pre-selected bootstrap samples (per tree)
