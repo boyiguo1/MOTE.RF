@@ -57,7 +57,8 @@
               // const std::vector<std::string>& always_split_variable_names, 
               bool prediction_mode, bool sample_with_replacement,
               // const std::vector<std::string>& unordered_variable_names, bool memory_saving_splitting, SplitRule splitrule,
-              std::vector<double>& case_weights, std::vector<std::vector<size_t>>& manual_inbag, bool predict_all,
+              // std::vector<double>& case_weights, 
+              std::vector<std::vector<size_t>>& manual_inbag, bool predict_all,
               bool keep_inbag, std::vector<double>& sample_fraction, //double alpha, 
               double minprop, bool holdout,
               // PredictionType prediction_type, 
@@ -163,7 +164,7 @@
    // 
  protected:
    void grow();
-   void growInternal();
+   // void growInternal();    // Don't need anymore
    // 
    // // Predict using existing tree from file and data as prediction data
    // void predict();
@@ -248,7 +249,8 @@
    // std::vector<std::vector<double>> split_select_weights;
    
    // Bootstrap weights
-   std::vector<double> case_weights;
+   std::vector<std::vector<size_t>> sampleIDs_per_class;
+   // std::vector<double> case_weights;
    
    // Pre-selected bootstrap samples (per tree)
    std::vector<std::vector<size_t>> manual_inbag;

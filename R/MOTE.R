@@ -30,6 +30,7 @@
 ##' 
 ##' TODO: 
 ##' Since our algorithm is oriented to analyze microbiome data, we can directly use phyloseq object.
+##' Case weights is not supported temporarily
 ##' 
 ##' See \url{https://github.com/boyiguo1/MOTE.RF} for the development version.
 ##' 
@@ -45,7 +46,6 @@
 ##' @param max.depth Maximal tree depth. A value of NULL or 0 (the default) corresponds to unlimited depth, 1 to tree stumps (1 split per tree).
 ##' @param replace Sample with replacement. 
 ##' @param sample.fraction Fraction of observations to sample. Default is 1 for sampling with replacement and 0.632 for sampling without replacement. For classification, this can be a vector of class-specific values. 
-##' @param case.weights Weights for sampling of training observations. Observations with larger weights will be selected with higher probability in the bootstrap (or subsampled) samples for the trees.
 ##' @param class.weights Weights for the outcome classes (in order of the factor levels) in the splitting rule (cost sensitive learning). Classification and probability prediction only. For classification the weights are also applied in the majority vote in terminal nodes.
 # TODO: Update the definition for minprop and num.random.splits
 ##' @param num.random.splits For "extratrees" splitrule.: Number of random splits to consider for each candidate splitting variable.
@@ -119,7 +119,8 @@ MOTE <- function(#formula = NULL, data = NULL,
                   write.forest = TRUE, 
                   replace = TRUE, 
                   sample.fraction = ifelse(replace, 1, 0.632), 
-                  case.weights = NULL, class.weights = NULL,
+                  # case.weights = NULL, 
+                  class.weights = NULL,
                   keep.inbag = FALSE, inbag = NULL, holdout = FALSE,
                   oob.error = TRUE,
                   num.threads = NULL,
@@ -277,9 +278,9 @@ MOTE <- function(#formula = NULL, data = NULL,
            "; available: ", table(treat)[idx], 
            ", requested: ", (sample.fraction * length(treat))[idx], ".")
     }
-    if (!is.null(case.weights)) {
-      stop("Error: Combination of case.weights and class-wise sampling not supported.")
-    }
+    # if (!is.null(case.weights)) {
+    #   stop("Error: Combination of case.weights and class-wise sampling not supported.")
+    # }
     # Fix order (C++ needs sample.fraction in order as classes appear in data)
     sample.fraction <- sample.fraction[as.numeric(unique(treat))]
   } else {
@@ -292,24 +293,24 @@ MOTE <- function(#formula = NULL, data = NULL,
   
   ## Case weights: NULL for no weights or all weights equal
   # TODO: check what this does
-  if (is.null(case.weights) || length(unique(case.weights)) == 1) {
-    case.weights <- c(0,0)
-    use.case.weights <- FALSE
-    if (holdout) {
-      stop("Error: Case weights required to use holdout mode.")
-    }
-  } else {
-    use.case.weights <- TRUE
-    
-    ## Sample from non-zero weights in holdout mode
-    if (holdout) {
-      sample.fraction <- sample.fraction * mean(case.weights > 0)
-    }
-    
-    if (!replace && sum(case.weights > 0) < sample.fraction * nrow(x)) {
-      stop("Error: Fewer non-zero case weights than observations to sample.")
-    }
-  }
+  # if (is.null(case.weights) || length(unique(case.weights)) == 1) {
+  #   case.weights <- c(0,0)
+  #   use.case.weights <- FALSE
+  #   if (holdout) {
+  #     stop("Error: Case weights required to use holdout mode.")
+  #   }
+  # } else {
+  #   use.case.weights <- TRUE
+  #   
+  #   ## Sample from non-zero weights in holdout mode
+  #   if (holdout) {
+  #     sample.fraction <- sample.fraction * mean(case.weights > 0)
+  #   }
+  #   
+  #   if (!replace && sum(case.weights > 0) < sample.fraction * nrow(x)) {
+  #     stop("Error: Fewer non-zero case weights than observations to sample.")
+  #   }
+  # }
   
   ## Manual inbag selection
   # TODO: check what this does
@@ -318,9 +319,9 @@ MOTE <- function(#formula = NULL, data = NULL,
     use.inbag <- FALSE
   } else if (is.list(inbag)) {
     use.inbag <- TRUE
-    if (use.case.weights) {
-      stop("Error: Combination of case.weights and inbag not supported.")
-    }
+    # if (use.case.weights) {
+    #   stop("Error: Combination of case.weights and inbag not supported.")
+    # }
     if (length(sample.fraction) > 1) {
       stop("Error: Combination of class-wise sampling and inbag not supported.")
     }
@@ -372,16 +373,19 @@ MOTE <- function(#formula = NULL, data = NULL,
   
   all.independent.variable.names <- independent.variable.names
   
+  treat_num <- ifelse(treat==trt.lvl[1], 1, -1)
   ## Call MOTE
   ## TODO: implement MOTECPP
   result <- MOTECpp(  x.b.new, x.diff,
                       y.e-y.b,
-                      treat,
+                      # TODO: make this numeric: 1, -1
+                      treat_num,
                       # Z,    
                     independent.variable.names, 
                     num.trees, verbose, seed, num.threads, write.forest, min.node.size,
                     prediction.mode,  loaded.forest, 
-                    replace, case.weights, use.case.weights, class.weights, 
+                    replace, # case.weights, use.case.weights,
+                    class.weights, 
                     predict.all, keep.inbag, sample.fraction,
                     minprop, holdout, #prediction.type, 
                     num.random.splits, #sparse.x, use.sparse.data, 

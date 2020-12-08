@@ -37,7 +37,8 @@
                     // const std::vector<std::string>& always_split_variable_names, 
                     bool prediction_mode, bool sample_with_replacement,
                     // const std::vector<std::string>& unordered_variable_names, bool memory_saving_splitting, SplitRule splitrule,
-                    std::vector<double>& case_weights, std::vector<std::vector<size_t>>& manual_inbag, bool predict_all,
+                    // std::vector<double>& case_weights, 
+                    std::vector<std::vector<size_t>>& manual_inbag, bool predict_all,
                     bool keep_inbag, std::vector<double>& sample_fraction, //double alpha, 
                     double minprop, bool holdout,
                     // PredictionType prediction_type, 
@@ -54,17 +55,45 @@
          
          
          // Set case weights
-         if (!case_weights.empty()) {
-                 if (case_weights.size() != num_samples) {
-                         throw std::runtime_error("Number of case weights not equal to number of samples.");
-                 }
-                 this->case_weights = case_weights;
-         }
-         
+         // if (!case_weights.empty()) {
+         //         if (case_weights.size() != num_samples) {
+         //                 throw std::runtime_error("Number of case weights not equal to number of samples.");
+         //         }
+         //         this->case_weights = case_weights;
+         // }
+         // 
          // Set manual inbag
          if (!manual_inbag.empty()) {
                  this->manual_inbag = manual_inbag;
          }
+         
+         // create class value and class ID
+         // TODO: 
+         // if (!prediction_mode) {
+         //         for (size_t i = 0; i < num_samples; ++i) {
+         //                 double value = data->get_trt(i, 0);
+         //                 
+         //                 // If classID is already in class_values, use ID. Else create a new one.
+         //                 uint classID = find(class_values.begin(), class_values.end(), value) - class_values.begin();
+         //                 if (classID == class_values.size()) {
+         //                         class_values.push_back(value);
+         //                 }
+         //                 response_classIDs.push_back(classID);
+         //         }
+         // }
+         
+         // Create sampleIDs_per_class i.e. trtment
+         // if (sample_fraction.size() > 1) {
+         //         sampleIDs_per_class.resize(sample_fraction.size());
+         //         for (auto& v : sampleIDs_per_class) {
+         //                 v.reserve(num_samples);
+         //         }
+         //         for (size_t i = 0; i < num_samples; ++i) {
+         //                 // Somehow, change this to trt levels_num of 0, 1s
+         //                 size_t classID = response_classIDs[i];
+         //                 sampleIDs_per_class[classID].push_back(i);
+         //         }
+         // }
          
          // Keep inbag counts
          this->keep_inbag = keep_inbag;
@@ -120,22 +149,14 @@
          // this->prediction_type = prediction_type;
          this->num_random_splits = num_random_splits;
          this->max_depth = max_depth;
-         // this->regularization_factor = regularization_factor;
-         // this->regularization_usedepth = regularization_usedepth;
          
          // Set number of samples and variables
          num_samples = data->getNumRows();
          num_independent_variables = data->getNumCols();
          
-         // Set unordered factor variables
-         // if (!prediction_mode) {
-         // data->setIsOrderedVariable(unordered_variable_names);
-         // }
          
          initInternal();
          
-         // // Init split select weights
-         // split_select_weights.push_back(std::vector<double>());
          
          // Init manual inbag
          manual_inbag.push_back(std::vector<size_t>());
@@ -243,10 +264,14 @@
          // Create thread ranges
          equalSplit(thread_ranges, 0, num_trees - 1, num_threads);
          
-         // Call special grow functions of subclasses. There trees must be created.
-         growInternal();
-         
          // Init trees, create a seed for each tree, based on main seed
+         // // Allocate space for tree vector
+         trees.reserve(num_trees);
+         for (size_t i = 0; i < num_trees; ++i) {
+                 trees.push_back(make_unique<Tree>());
+         }
+         
+         
          std::uniform_int_distribution<uint> udist;
          for (size_t i = 0; i < num_trees; ++i) {
                  uint tree_seed;
@@ -256,16 +281,6 @@
                          tree_seed = (i + 1) * seed;
                  }
                  
-                 // B: not using split_select_weights
-                 // TODO: delete this
-                 // Get split select weights for tree
-                 // std::vector<double>* tree_split_select_weights;
-                 // if (split_select_weights.size() > 1) {
-                 //         tree_split_select_weights = &split_select_weights[i];
-                 // } else {
-                 //         tree_split_select_weights = &split_select_weights[0];
-                 // }
-                 
                  // Get inbag counts for tree
                  std::vector<size_t>* tree_manual_inbag;
                  if (manual_inbag.size() > 1) {
@@ -273,6 +288,7 @@
                  } else {
                          tree_manual_inbag = &manual_inbag[0];
                  }
+                 // TODO: adding sampleIDs_per_class to initiator of tree
                  trees[i]->init(data.get(), num_samples, tree_seed, min_node_size,
                                 sample_with_replacement, //memory_saving_splitting, 
                                 // TODO: do we need case_weights?
@@ -281,10 +297,18 @@
                                 &sample_fraction, minprop, holdout, num_random_splits, max_depth);
          }
          
+         *verbose_out << "Finish Initialize "<< num_trees<<" Trees in Grow" << std::endl;               //Debug line
+         
          // Init variable importance
          // variable_importance.resize(num_independent_variables, 0);
          variable_importance = vec(num_independent_variables, fill::zeros);
          
+         // Debug case when there is only tree
+         trees[0]->grow(&variable_importance); //Debug line
+         
+         
+         *verbose_out << "Initialize Variable_imporantace" << std::endl;               //Debug line
+       
          // Grow trees in multiple threads
 #ifdef OLD_WIN_R_BUILD
          // #nocov start
@@ -296,6 +320,7 @@
                  progress++;
                  showProgress("Growing trees..", start_time, lap_time);
          }
+         *verbose_out << "End Building Tree Single Thred" << std::endl;               //Debug line
          // #nocov end
 #else
          progress = 0;
@@ -303,13 +328,13 @@
          aborted = false;
          aborted_threads = 0;
 #endif
-         
+
          std::vector<std::thread> threads;
          threads.reserve(num_threads);
-         
+
          // Initialize importance per thread
          std::vector<vec> variable_importance_threads(num_threads);
-         
+
          for (uint i = 0; i < num_threads; ++i) {
                  // TODO: Do I need to create for each one
                  // Yes I need
@@ -322,13 +347,13 @@
          for (auto &thread : threads) {
                  thread.join();
          }
-         
+
 #ifdef R_BUILD
          if (aborted_threads > 0) {
                  throw std::runtime_error("User interrupt.");
          }
 #endif
-         
+
          // Sum thread importances
          //          if (importance_mode == IMP_GINI || importance_mode == IMP_GINI_CORRECTED || importance_mode == IMP_GINI_OOB) {
          variable_importance = vec(num_independent_variables, fill::zeros);
@@ -340,7 +365,7 @@
          // TODO: remove useless vec
          //                  variable_importance_threads.clear();
          // }
-         
+
 #endif
          //          
          //          // Divide importance by number of trees
@@ -349,15 +374,9 @@
          //                          v /= num_trees;
          //                  }
          //          }
+         *verbose_out << "End Growing Trees" << std::endl;               //Debug line
  }
- 
- // TODO: merge back to the main function
- void Forest::growInternal() {
-         trees.reserve(num_trees);
-         for (size_t i = 0; i < num_trees; ++i) {
-                 trees.push_back(make_unique<Tree>());
-         }
- }
+
  
  
 #ifndef OLD_WIN_R_BUILD
@@ -365,7 +384,7 @@
  void Forest::growTreesInThread(uint thread_idx, vec* variable_importance) {
          if (thread_ranges.size() > thread_idx + 1) {
                  for (size_t i = thread_ranges[thread_idx]; i < thread_ranges[thread_idx + 1]; ++i) {
-                         trees[i]->grow(variable_importance);
+                         // trees[i]->grow(variable_importance);
                          
                          // Check for user interrupt
 #ifdef R_BUILD
@@ -379,6 +398,7 @@
                          
                          // Increase progress by 1 tree
                          std::unique_lock<std::mutex> lock(mutex);
+                         *verbose_out << "Finish Growing Tree " << i << std::endl;         // Debug Line
                          ++progress;
                          condition_variable.notify_one();
                  }
@@ -400,7 +420,8 @@
                  double relative_progress = (double) progress / (double) num_trees;
                  double time_from_start = (clock() - start_time) / CLOCKS_PER_SEC;
                  uint remaining_time = (1 / relative_progress - 1) * time_from_start;
-                 if (verbose_out) {
+                 // if (verbose_out) {
+                 if (true) { // debugline
                          *verbose_out << operation << " Progress: " << round(100 * relative_progress)
                                       << "%. Estimated remaining time: " << beautifyTime(remaining_time) << "." << std::endl;
                  }
@@ -413,16 +434,16 @@
          using std::chrono::steady_clock;
          using std::chrono::duration_cast;
          using std::chrono::seconds;
-         
+
          steady_clock::time_point start_time = steady_clock::now();
          steady_clock::time_point last_time = steady_clock::now();
          std::unique_lock<std::mutex> lock(mutex);
-         
+
          // Wait for message from threads and show output if enough time elapsed
          while (progress < max_progress) {
                  condition_variable.wait(lock);
                  seconds elapsed_time = duration_cast<seconds>(steady_clock::now() - last_time);
-                 
+
                  // Check for user interrupt
 #ifdef R_BUILD
                  if (!aborted && checkInterrupt()) {
@@ -432,7 +453,7 @@
                          return;
                  }
 #endif
-                 
+
                  if (progress > 0 && elapsed_time.count() > STATUS_INTERVAL) {
                          double relative_progress = (double) progress / (double) max_progress;
                          seconds time_from_start = duration_cast<seconds>(steady_clock::now() - start_time);

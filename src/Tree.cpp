@@ -78,6 +78,7 @@
  }
  
  void Tree::grow(vec* variable_importance) {
+         Rcpp::Rcout << "Start tree::grow" << std::endl;        // Debug Line
          // // Allocate memory for tree growing
          // TODO: figure out what to do with this
          // allocateMemory();
@@ -106,11 +107,13 @@
          if(sample_fraction->size() !=2) {
                  throw "sample.fraction must contains only 2 elements";
          }
-         
+
+         Rcpp::Rcout << "Start tree::bootstrap" << std::endl;        // Debug Line         
          if (!manual_inbag->empty()) {
                  setManualInbag();
          } else {
                  if (sample_with_replacement) {
+                         Rcpp::Rcout << "Start tree::bootstrapClassWise" << std::endl;        // Debug Line    
                          bootstrapClassWise();
                  } else {
                          bootstrapWithoutReplacementClassWise();
@@ -125,6 +128,9 @@
          size_t num_open_nodes = 1;
          size_t i = 0;
          depth = 0;
+         
+         Rcpp::Rcout << "Starting creating Split" << std::endl;       //Debug Line
+         
          while (num_open_nodes > 0) {
                  // Split node
                  bool is_terminal_node = splitNode(i);

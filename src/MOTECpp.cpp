@@ -47,8 +47,8 @@
                     uint num_trees, bool verbose, uint seed, uint num_threads,
                     bool write_forest, uint min_node_size,
                     bool prediction_mode, Rcpp::List loaded_forest, 
-                    bool sample_with_replacement,  std::vector<double>& case_weights,
-                    bool use_case_weights, std::vector<double>& class_weights, bool predict_all, bool keep_inbag,
+                    bool sample_with_replacement,  // std::vector<double>& case_weights, bool use_case_weights,
+                    std::vector<double>& class_weights, bool predict_all, bool keep_inbag,
                     std::vector<double>& sample_fraction, double minprop, bool holdout, 
                     uint num_random_splits, 
                     bool oob_error, uint max_depth, 
@@ -62,9 +62,9 @@
        std::unique_ptr<Data> data { };
        
        
-       if (!use_case_weights) {
-          case_weights.clear();
-       }
+       // if (!use_case_weights) {
+       //    case_weights.clear();
+       // }
        if (!use_inbag) {
           inbag.clear();
        }
@@ -94,15 +94,16 @@
        forest = make_unique<Forest>();
        
        // Init Ranger
-       forest->initR(std::move(data), 
+       forest->initR(std::move(data),
                      num_trees, verbose_out, seed,
-                     num_threads, 
+                     num_threads,
                      min_node_size,
                      prediction_mode, sample_with_replacement,
-                     case_weights, inbag, predict_all,
-                     keep_inbag, sample_fraction, 
-                     minprop, holdout, 
-                     num_random_splits, 
+                     // case_weights, 
+                     inbag, predict_all,
+                     keep_inbag, sample_fraction,
+                     minprop, holdout,
+                     num_random_splits,
                      max_depth
        );
        
@@ -113,7 +114,7 @@
        //   std::vector<std::vector<size_t>> split_varIDs = loaded_forest["split.varIDs"];
        //   std::vector<std::vector<double>> split_values = loaded_forest["split.values"];
        //   std::vector<bool> is_ordered = loaded_forest["is.ordered"];
-       //   
+       // 
        //   if (treetype == TREE_CLASSIFICATION) {
        //     std::vector<double> class_values = loaded_forest["class.values"];
        //     auto& temp = dynamic_cast<ForestClassification&>(*forest);
@@ -145,11 +146,12 @@
        //     temp.setClassWeights(class_weights);
        //   }
        // }
-       
+
        // Run Ranger
-       forest->run(false, oob_error);
-       
-       
+       // forest->run(false, oob_error);        // original line
+       forest->run(true, oob_error);        // Debug Line
+
+
        // Use first non-empty dimension of predictions
        // TODO: need to change
        // const std::vector<std::vector<std::vector<double>>>& predictions = forest->getPredictions();
@@ -162,35 +164,35 @@
        // } else {
        //   result.push_back(forest->getPredictions(), "predictions");
        // }
-       // 
+       //
        // Return output
-       result.push_back(forest->getNumTrees(), "num.trees");
-       result.push_back(forest->getNumIndependentVariables(), "num.independent.variables");
-       
-       if (!prediction_mode) {
-          result.push_back(forest->getMinNodeSize(), "min.node.size");
-          result.push_back(forest->getVariableImportance(), "variable.importance");
-          
-          // TODO: expand this function
-          //   result.push_back(forest->getOverallPredictionError(), "prediction.error");
-       }
-       
-       if (keep_inbag) {
-          result.push_back(forest->getInbagCounts(), "inbag.counts");
-       }
-       
-       // Save forest if needed
-       if (write_forest) {
-          Rcpp::List forest_object;
-          forest_object.push_back(forest->getNumTrees(), "num.trees");
-          // TODO: customize to accomadate to our forest structure
-          //   forest_object.push_back(forest->getChildNodeIDs(), "child.nodeIDs");
-          //   forest_object.push_back(forest->getSplitVarIDs(), "split.varIDs");
-          //   forest_object.push_back(forest->getSplitValues(), "split.values");
+       // result.push_back(forest->getNumTrees(), "num.trees");
+       // result.push_back(forest->getNumIndependentVariables(), "num.independent.variables");
+       // 
+       // if (!prediction_mode) {
+       //    result.push_back(forest->getMinNodeSize(), "min.node.size");
+       //    result.push_back(forest->getVariableImportance(), "variable.importance");
+       // 
+       //    // TODO: expand this function
+       //    //   result.push_back(forest->getOverallPredictionError(), "prediction.error");
+       // }
+       // 
+       // if (keep_inbag) {
+       //    result.push_back(forest->getInbagCounts(), "inbag.counts");
+       // }
+       // 
+       // // Save forest if needed
+       // if (write_forest) {
+       //    Rcpp::List forest_object;
+       //    forest_object.push_back(forest->getNumTrees(), "num.trees");
+       //    // TODO: customize to accomadate to our forest structure
+       //    //   forest_object.push_back(forest->getChildNodeIDs(), "child.nodeIDs");
+       //    //   forest_object.push_back(forest->getSplitVarIDs(), "split.varIDs");
+       //    //   forest_object.push_back(forest->getSplitValues(), "split.values");
+       // 
+       //    result.push_back(forest_object, "forest");
+       // }
 
-          result.push_back(forest_object, "forest");
-       }
-       
        if (!verbose) {
           delete verbose_out;
        }
