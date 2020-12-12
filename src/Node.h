@@ -48,7 +48,8 @@ public:
     this->n2 = n2;
   }
   
-  void set_sum(arma::vec sum1, arma::vec sum2){
+  void set_sum(arma::rowvec sum1, arma::rowvec sum2){
+    Rcpp::Rcout << "Creating set_sum" << std::endl;        // Debug Line
     this->Outcome_1 = sum1;
     this->Outcome_2 = sum2;
   }
@@ -89,8 +90,8 @@ private:
   size_t n1;
   size_t n2;
   
-  arma::vec Outcome_1;
-  arma::vec Outcome_2;
+  arma::rowvec Outcome_1;
+  arma::rowvec Outcome_2;
 };
 
 } // namespace MOTE

@@ -103,6 +103,14 @@ using namespace arma;
       return x_diff.rows(pos);
    }
    
+   size_t n_y_diff_rows() const{
+      
+      if(!((y_diff.n_rows==x_diff.n_rows) & (x_b.n_rows==y_diff.n_rows) & (y_diff.n_rows== trt.n_elem)))
+         throw std::runtime_error("Inconsistent sample size for Data structure");
+      
+      return y_diff.n_rows;
+   }
+   
 
    
  protected:

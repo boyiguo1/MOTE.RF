@@ -130,6 +130,7 @@
          
          while (num_open_nodes > 0) {
                  // Split node
+                 // TODO: debug the node splitting
                  bool is_terminal_node = splitNode(i);
                  if (is_terminal_node) {
                          --num_open_nodes;
@@ -148,70 +149,12 @@
                  ++i;
          }
          // 
-         // // Delete sampleID vector to save memory
+         // Delete sampleID vector to save memory
+         // TODO: figure out if more space can be freed
          sampleIDs.clear();
          sampleIDs.shrink_to_fit();
          cleanUpInternal();
  }
- 
- void Tree::predict(const Data* prediction_data, bool oob_prediction) {
-         
-         size_t num_samples_predict;
-         if (oob_prediction) {
-                 num_samples_predict = num_samples_oob;
-         } else {
-                 num_samples_predict = prediction_data->getNumRows();
-         }
-         
-         prediction_terminal_nodeIDs.resize(num_samples_predict, 0);
-         
-         // For each sample start in root, drop down the tree and return final value
-         for (size_t i = 0; i < num_samples_predict; ++i) {
-                 size_t sample_idx;
-                 if (oob_prediction) {
-                         sample_idx = oob_sampleIDs[i];
-                 } else {
-                         sample_idx = i;
-                 }
-                 size_t nodeID = 0;
-                 while (1) {
-                         
-                         // Break if terminal node
-                         if (child_nodeIDs[0][nodeID] == 0 && child_nodeIDs[1][nodeID] == 0) {
-                                 break;
-                         }
-                         
-                         // Move to child
-                         // size_t split_varID = split_varIDs[nodeID];
-                         
-                         double value = dot(prediction_data->get_x_b_rows(sample_idx), child_nodes[nodeID]->get_coefs());
-                         // if (prediction_data->isOrderedVariable(split_varID)) {
-                                 if (value <= child_nodes[nodeID]->get_value()) {
-                                         // Move to left child
-                                         nodeID = child_nodeIDs[0][nodeID];
-                                 } else {
-                                         // Move to right child
-                                         nodeID = child_nodeIDs[1][nodeID];
-                                 }
-                         // } else {
-                         //         size_t factorID = floor(value) - 1;
-                         //         size_t splitID = floor(split_values[nodeID]);
-                         //         
-                         //         // Left if 0 found at position factorID
-                         //         if (!(splitID & (1ULL << factorID))) {
-                         //                 // Move to left child
-                         //                 nodeID = child_nodeIDs[0][nodeID];
-                         //         } else {
-                         //                 // Move to right child
-                         //                 nodeID = child_nodeIDs[1][nodeID];
-                         //         }
-                         // }
-                 }
-                 
-                 prediction_terminal_nodeIDs[i] = nodeID;
-         }
- }
- 
  
 
  bool Tree::splitNode(size_t nodeID) {
@@ -220,17 +163,26 @@
          // Boyi:: Doesn't apply to our methods. We don't needs mtry
          // std::vector<size_t> possible_split_varIDs;
          // createPossibleSplitVarSubset(possible_split_varIDs);
-         // 
+
+         Rcpp::Rcout << "Split Node Started" << std::endl;        // Debug Line
+         
          // // Call subclass method, sets split_varIDs and split_values
          bool stop = splitNodeInternal(nodeID);
          if (stop) {
-                 // Terminal node
+                 Rcpp::Rcout << "Terminal node L231" << std::endl;        // Debug Line
                  return true;
          }
          // 
          // size_t split_varID = split_varIDs[nodeID];
+         
+         Rcpp::Rcout << "Node ID" << nodeID << std::endl;        // Debug Line
+         Rcpp::Rcout << "child nodes size" << child_nodes.size() << std::endl;        // Debug Line
+         
+         
          double split_value = child_nodes[nodeID]->get_value();
          vec tmp_coef = child_nodes[nodeID]-> get_coefs();
+         
+         Rcpp::Rcout << "Got Split  Value" << std::endl;        // Debug Line
          
          // Create child nodes
          size_t left_child_nodeID = child_nodes.size();
@@ -242,6 +194,8 @@
          child_nodeIDs[1][nodeID] = right_child_nodeID;
          createEmptyNode();
          start_pos[right_child_nodeID] = end_pos[nodeID];
+         
+         Rcpp::Rcout << "Finished Creating Child Noe" << std::endl;        // Debug Line
          
          // For each sample in node, assign to left or right child
          // Ordered: left is <= splitval and right is > splitval
@@ -263,33 +217,46 @@
          // End position of left child is start position of right child
          end_pos[left_child_nodeID] = start_pos[right_child_nodeID];
          end_pos[right_child_nodeID] = end_pos[nodeID];
-         // 
+
+         Rcpp::Rcout << "After Sording start pos and end pos" << std::endl;        // Debug Line
+         
          // No terminal node
          return false;
  }
  
  bool Tree::splitNodeInternal(size_t nodeID) {
          
-         
+         Rcpp::Rcout << "In SplitNodeInternal" << std::endl;        // Debug Line
          size_t num_samples_node = end_pos[nodeID] - start_pos[nodeID];
-         
+         Rcpp::Rcout << "Node ID "<< nodeID << std::endl;        // Debug Line
+         Rcpp::Rcout << "end_pos.size  "<< end_pos.size() << std::endl;        // Debug Line
+         Rcpp::Rcout << "start_pos.size  "<< start_pos.size() << std::endl;        // Debug Line
          // finding all the sampleIDs in the current node
          IntegerVector indices;
          for (size_t pos = start_pos[nodeID]; pos < end_pos[nodeID]; ++pos) {
+                 // Rcpp::Rcout << "SampleID  "<< sampleIDs[pos] << std::endl;        // Debug Line
                  indices.push_back(sampleIDs[pos]);
          }
-         
+         Rcpp::Rcout << "After getting incdices of " << indices.size() <<" elements" << std::endl;        // Debug Line
+         Rcpp::Rcout << "After getting y diff rows for datasets " << data->n_y_diff_rows() << std::endl;       // Debug Line
          
          vec tmp_trt = data->get_trt(as<uvec>(indices));
+         Rcpp::Rcout << "After Finding Treatmnents" << std::endl;        // Debug Line
+         
+         // The following index variables are the index fo the indices
          uvec idx_1 = find(tmp_trt==1);
          uvec idx_2 = find(tmp_trt==-1);
          
          size_t n_outcome1 = idx_1.n_elem;
          size_t n_outcome2 = idx_2.n_elem;
-         rowvec sum_outcome1 = colSums(data->get_y_diff_rows(idx_1));
-         rowvec sum_outcome2 = colSums(data->get_y_diff_rows(idx_2));
+         Rcpp::Rcout << "After Calculate outcome SIze" << std::endl;        // Debug Line
+         rowvec sum_outcome1 = colSums(data->get_y_diff_rows(as<uvec>(indices[as<NumericVector>(wrap(idx_1))])));
+         Rcpp::Rcout << "After Calculate Average SIze for outcome 1" << std::endl;        // Debug Line
+         // Rcpp::Rcout << idx_2 << std::endl;        // Debug Line
+         rowvec sum_outcome2 = colSums(data->get_y_diff_rows(as<uvec>(indices[as<NumericVector>(wrap(idx_2))])));
+
          
-         // 
+         Rcpp::Rcout << "Summairze Outcomes" << std::endl;        // Debug Line
          // Stop if maximum node size or depth reached
          if (num_samples_node <= min_node_size || (nodeID >= last_left_nodeID && max_depth > 0 && depth >= max_depth)) {
                  
@@ -299,14 +266,18 @@
                  return true;
          }
          
-         // Find best split, stop if no decrease of impurity
+         Rcpp::Rcout << "Before Find Best Split" << std::endl;        // Debug Line
+         // TODO: debug findBestSplit(nodeID) function
          bool stop = findBestSplit(nodeID);
+         
          if (stop) {
                  child_nodes[nodeID]->set_leaf(true);
                  child_nodes[nodeID]->set_n(n_outcome1, n_outcome2);
                  child_nodes[nodeID]->set_sum(sum_outcome1, sum_outcome2);
                  return true;
          }
+         
+         Rcpp::Rcout << "End SplitNodeInternal" << std::endl;        // Debug Line
          
          return false;
  }
@@ -491,10 +462,10 @@
                  ),
                  join_horiz(mat(n, 2*p, fill::zeros), T_Delta_Y)//  cbind(matrix(0,nrow=n,ncol=2*p),T.delta.y)
          );
-         
+         Rcpp::Rcout << "After Matrix Augmentation" << std::endl;        // Debug Line
          // Run CCA
          mat cca_res = cancor(left_mat, right_mat);
-         
+         Rcpp::Rcout << "After CCA" << std::endl;        // Debug Line         
          // if degenerate solution, stop
          if(std::min(cca_res.n_cols, cca_res.n_rows) < (2*p+q)){
                  return true;
@@ -509,8 +480,8 @@
          
          // TODO: extract this part to a function
          // Find Possible Splits
-         vec split_can_1 = unique(proj_x.elem(idx_1));
-         vec split_can_2 = unique(proj_x.elem(idx_2));
+         vec split_can_1 = unique(proj_x.elem(as<uvec>(indices[as<NumericVector>(wrap(idx_1))])));
+         vec split_can_2 = unique(proj_x.elem(as<uvec>(indices[as<NumericVector>(wrap(idx_2))])));
          vec bnd_quantile = {minprop, 1-minprop};
          vec treat1_bnd = quantile(split_can_1, bnd_quantile);
          vec treat2_bnd = quantile(split_can_2, bnd_quantile);
@@ -588,6 +559,65 @@
                  }
          }
  }
+ 
+ void Tree::predict(const Data* prediction_data, bool oob_prediction) {
+         
+         size_t num_samples_predict;
+         if (oob_prediction) {
+                 num_samples_predict = num_samples_oob;
+         } else {
+                 num_samples_predict = prediction_data->getNumRows();
+         }
+         
+         prediction_terminal_nodeIDs.resize(num_samples_predict, 0);
+         
+         // For each sample start in root, drop down the tree and return final value
+         for (size_t i = 0; i < num_samples_predict; ++i) {
+                 size_t sample_idx;
+                 if (oob_prediction) {
+                         sample_idx = oob_sampleIDs[i];
+                 } else {
+                         sample_idx = i;
+                 }
+                 size_t nodeID = 0;
+                 while (1) {
+                         
+                         // Break if terminal node
+                         if (child_nodeIDs[0][nodeID] == 0 && child_nodeIDs[1][nodeID] == 0) {
+                                 break;
+                         }
+                         
+                         // Move to child
+                         // size_t split_varID = split_varIDs[nodeID];
+                         
+                         double value = dot(prediction_data->get_x_b_rows(sample_idx), child_nodes[nodeID]->get_coefs());
+                         // if (prediction_data->isOrderedVariable(split_varID)) {
+                         if (value <= child_nodes[nodeID]->get_value()) {
+                                 // Move to left child
+                                 nodeID = child_nodeIDs[0][nodeID];
+                         } else {
+                                 // Move to right child
+                                 nodeID = child_nodeIDs[1][nodeID];
+                         }
+                         // } else {
+                         //         size_t factorID = floor(value) - 1;
+                         //         size_t splitID = floor(split_values[nodeID]);
+                         //         
+                         //         // Left if 0 found at position factorID
+                         //         if (!(splitID & (1ULL << factorID))) {
+                         //                 // Move to left child
+                         //                 nodeID = child_nodeIDs[0][nodeID];
+                         //         } else {
+                         //                 // Move to right child
+                         //                 nodeID = child_nodeIDs[1][nodeID];
+                         //         }
+                         // }
+                 }
+                 
+                 prediction_terminal_nodeIDs[i] = nodeID;
+         }
+ }
+ 
  
  void Tree::addImportance(size_t nodeID, const vec& coefs){
          
