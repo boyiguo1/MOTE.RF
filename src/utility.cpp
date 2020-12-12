@@ -82,6 +82,7 @@ mat times(const mat& X, const vec& y){
       return(out);
 }
 
+
 mat cancor(mat& matr_1, mat& matr_2){
 
   Function f("cancor");   
