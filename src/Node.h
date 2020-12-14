@@ -49,7 +49,7 @@ public:
   }
   
   void set_sum(arma::rowvec sum1, arma::rowvec sum2){
-    Rcpp::Rcout << "Creating set_sum" << std::endl;        // Debug Line
+    // Rcpp::Rcout << "Creating set_sum" << std::endl;        // Debug Line
     this->Outcome_1 = sum1;
     this->Outcome_2 = sum2;
   }

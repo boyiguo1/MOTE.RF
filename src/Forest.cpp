@@ -320,10 +320,10 @@
          variable_importance = vec(num_independent_variables, fill::zeros);
          
          // Debug case when there is only tree
-         trees[0]->grow(&variable_importance); //Debug line
+         // trees[1]->grow(&variable_importance); //Debug line
+         // throw std::runtime_error("Finish Building the example tree");   //Debug line
          
-         
-         *verbose_out << "Initialize Variable_imporantace" << std::endl;               //Debug line
+         // *verbose_out << "Initialize Variable_imporantace" << std::endl;               //Debug line
        
          // Grow trees in multiple threads
 #ifdef OLD_WIN_R_BUILD
@@ -336,7 +336,7 @@
                  progress++;
                  showProgress("Growing trees..", start_time, lap_time);
          }
-         *verbose_out << "End Building Tree Single Thred" << std::endl;               //Debug line
+         // *verbose_out << "End Building Tree Single Thred" << std::endl;               //Debug line
          // #nocov end
 #else
          progress = 0;
@@ -350,7 +350,7 @@
 
          // Initialize importance per thread
          std::vector<vec> variable_importance_threads(num_threads);
-
+         *verbose_out << "Start to Fit Tree Parallell" << std::endl;               //Debug line
          for (uint i = 0; i < num_threads; ++i) {
                  // TODO: Do I need to create for each one
                  // Yes I need
@@ -390,7 +390,7 @@
          //                          v /= num_trees;
          //                  }
          //          }
-         *verbose_out << "End Growing Trees" << std::endl;               //Debug line
+         // *verbose_out << "End Growing Trees" << std::endl;               //Debug line
  }
 
  
@@ -400,7 +400,7 @@
  void Forest::growTreesInThread(uint thread_idx, vec* variable_importance) {
          if (thread_ranges.size() > thread_idx + 1) {
                  for (size_t i = thread_ranges[thread_idx]; i < thread_ranges[thread_idx + 1]; ++i) {
-                         // trees[i]->grow(variable_importance);
+                         trees[i]->grow(variable_importance);
                          
                          // Check for user interrupt
 #ifdef R_BUILD

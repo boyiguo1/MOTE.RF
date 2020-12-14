@@ -80,7 +80,7 @@
  }
  
  void Tree::grow(vec* variable_importance) {
-         // Rcpp::Rcout << "Start tree::grow" << std::endl;        // Debug Line
+         Rcpp::Rcout << "Start tree::grow" << std::endl;        // Debug Line
 
          // Allocate memory for tree growing
          // TODO: figure out what to do with this
@@ -146,14 +146,17 @@
                                  ++depth;
                          }
                  }
+                 // Rcpp::Rcout << "Resolve a Node" << std::endl;        // Debug Line
                  ++i;
          }
          // 
          // Delete sampleID vector to save memory
          // TODO: figure out if more space can be freed
-         sampleIDs.clear();
-         sampleIDs.shrink_to_fit();
-         cleanUpInternal();
+         // sampleIDs.clear();
+         // sampleIDs.shrink_to_fit();
+         // cleanUpInternal();
+         
+         Rcpp::Rcout << "End growing tree" << std::endl;        // Debug Line
  }
  
 
@@ -169,20 +172,20 @@
          // // Call subclass method, sets split_varIDs and split_values
          bool stop = splitNodeInternal(nodeID);
          if (stop) {
-                 Rcpp::Rcout << "Terminal node L231" << std::endl;        // Debug Line
+                 // Rcpp::Rcout << "Terminal node L231" << std::endl;        // Debug Line
                  return true;
          }
          // 
          // size_t split_varID = split_varIDs[nodeID];
          
-         Rcpp::Rcout << "Node ID" << nodeID << std::endl;        // Debug Line
-         Rcpp::Rcout << "child nodes size" << child_nodes.size() << std::endl;        // Debug Line
+         // Rcpp::Rcout << "Node ID" << nodeID << std::endl;        // Debug Line
+         // Rcpp::Rcout << "child nodes size" << child_nodes.size() << std::endl;        // Debug Line
          
          
          double split_value = child_nodes[nodeID]->get_value();
          vec tmp_coef = child_nodes[nodeID]-> get_coefs();
          
-         Rcpp::Rcout << "Got Split  Value" << std::endl;        // Debug Line
+         // Rcpp::Rcout << "Got Split  Value" << std::endl;        // Debug Line
          
          // Create child nodes
          size_t left_child_nodeID = child_nodes.size();
@@ -195,7 +198,7 @@
          createEmptyNode();
          start_pos[right_child_nodeID] = end_pos[nodeID];
          
-         Rcpp::Rcout << "Finished Creating Child Noe" << std::endl;        // Debug Line
+         // Rcpp::Rcout << "Finished Creating Child Noe" << std::endl;        // Debug Line
          
          // For each sample in node, assign to left or right child
          // Ordered: left is <= splitval and right is > splitval
@@ -218,7 +221,7 @@
          end_pos[left_child_nodeID] = start_pos[right_child_nodeID];
          end_pos[right_child_nodeID] = end_pos[nodeID];
 
-         Rcpp::Rcout << "After Sording start pos and end pos" << std::endl;        // Debug Line
+         // Rcpp::Rcout << "After Sording start pos and end pos" << std::endl;        // Debug Line
          
          // No terminal node
          return false;
@@ -227,7 +230,7 @@
  bool Tree::splitNodeInternal(size_t nodeID) {
          
          size_t num_samples_node = end_pos[nodeID] - start_pos[nodeID];
-         Rcpp::Rcout << "Internal Splitting in Node ID "<< nodeID << std::endl;        // Debug Line
+         // Rcpp::Rcout << "Internal Splitting in Node ID "<< nodeID << std::endl;        // Debug Line
 
          if(start_pos.size() != end_pos.size()){
                  Rcpp::Rcout << "end_pos.size  "<< end_pos.size() << std::endl;        // Debug Line
@@ -241,7 +244,7 @@
                  // Rcpp::Rcout << "SampleID  "<< sampleIDs[pos] << std::endl;        // Debug Line
                  indices.push_back(sampleIDs[pos]);
          }
-         Rcpp::Rcout << "# of Samples: " << indices.size() << std::endl;        // Debug Line
+         // Rcpp::Rcout << "# of Samples: " << indices.size() << std::endl;        // Debug Line
          // Rcpp::Rcout << "After getting y diff rows for datasets " << data->n_y_diff_rows() << std::endl;       // Debug Line
          
          vec tmp_trt = data->get_trt(as<uvec>(indices));
@@ -281,7 +284,7 @@
                  return true;
          }
          
-         Rcpp::Rcout << "End SplitNodeInternal" << std::endl;        // Debug Line
+         // Rcpp::Rcout << "End SplitNodeInternal" << std::endl;        // Debug Line
          
          return false;
  }
@@ -406,7 +409,7 @@
                  indices.push_back(sampleIDs[pos]);
          }
          
-         Rcpp::Rcout << "Finding Best Split for Node IDs" << std::endl;        // Debug Line
+         // Rcpp::Rcout << "Finding Best Split for Node IDs" << std::endl;        // Debug Line
          
          // Retrieve data
          vec tmp_trt = data->get_trt(as<uvec>(indices));
@@ -425,21 +428,14 @@
          
          // Retrieve X_b
          mat x_b = data->get_x_b_rows(as<uvec>(indices));
-         
          // Retrieve x_diff;
          // mat x_e = (data->get_x_e_rows(as<uvec>(indices)));
          mat x_diff = data->get_x_diff_rows(as<uvec>(indices));
-         
          // Retrieve y_diff
          mat y_diff = data->get_y_diff_rows(as<uvec>(indices));
          
-         size_t ncol_x_b = x_b.n_cols;
+         // size_t ncol_x_b = x_b.n_cols;
          
-         // Initiate variables for the final split results
-         double best_decrease = -1;
-         vec best_coefs(ncol_x_b);
-         double best_value = 0;
-         rowvec x_b_center = mean(x_b,0);
          
          size_t p = x_b.n_cols;
          size_t q = y_diff.n_cols;
@@ -499,9 +495,9 @@
          // Rcpp::Rcout << "After CCA" << std::endl;        // Debug Line         
          // if degenerate solution, stop
          if(std::min(cca_res.n_cols, cca_res.n_rows) < (2*p+q)){
-                 Rcpp::Rcout << "CCA_res columns" << cca_res.n_cols << std::endl;        // Debug Line              
-                 Rcpp::Rcout << "CCA_res rows" << cca_res.n_rows << std::endl;        // Debug Line                 
-                 Rcpp::Rcout << "Terminal Node: Degernated CCA" << std::endl;        // Debug Line    
+                 // Rcpp::Rcout << "CCA_res columns" << cca_res.n_cols << std::endl;        // Debug Line              
+                 // Rcpp::Rcout << "CCA_res rows" << cca_res.n_rows << std::endl;        // Debug Line                 
+                 // Rcpp::Rcout << "Terminal Node: Degernated CCA" << std::endl;        // Debug Line    
                  return true;
          }
          
@@ -515,23 +511,23 @@
          vec proj_y = T_Delta_Y * coef_y;
          
          vec tmp_proj = (unique(proj_x));       // Debug Line
-         Rcpp::Rcout << "# of Unique Proj Values: " << tmp_proj.n_elem << std::endl;        // Debug Line
+         // Rcpp::Rcout << "# of Unique Proj Values: " << tmp_proj.n_elem << std::endl;        // Debug Line
          
          // TODO: extract this part to a function
          // Find Possible Splits
          // vec split_can_1 = unique(proj_x.elem(as<uvec>(indices[as<NumericVector>(wrap(idx_1))])));
          vec split_can_1 = unique(proj_x.elem(idx_1));                                                  // Debug Line
-         Rcpp::Rcout << "# of Unique Proj Values for trt 1: " << split_can_1.n_elem << std::endl;        // Debug Line
+         // Rcpp::Rcout << "# of Unique Proj Values for trt 1: " << split_can_1.n_elem << std::endl;        // Debug Line
          // vec split_can_2 = unique(proj_x.elem(as<uvec>(indices[as<NumericVector>(wrap(idx_2))])));
          vec split_can_2 = unique(proj_x.elem(idx_2));                                                  // Debug Line    
-         Rcpp::Rcout << "# of Unique Proj Values for trt 2: " << split_can_2.n_elem << std::endl;        // Debug Line
+         // Rcpp::Rcout << "# of Unique Proj Values for trt 2: " << split_can_2.n_elem << std::endl;        // Debug Line
          vec bnd_quantile = {minprop, 1-minprop};
          // Rcpp::Rcout << "bound Quantile: "<< bnd_quantile << std::endl;        // Debug Line     
          
          vec treat1_bnd = quantile(split_can_1, bnd_quantile);
-         Rcpp::Rcout << "trt1 bound: "<< treat1_bnd << std::endl;        // Debug Line 
+         // Rcpp::Rcout << "trt1 bound: "<< treat1_bnd << std::endl;        // Debug Line 
          vec treat2_bnd = quantile(split_can_2, bnd_quantile);
-         Rcpp::Rcout << "trt2 bound: "<< treat2_bnd << std::endl;        // Debug Line 
+         // Rcpp::Rcout << "trt2 bound: "<< treat2_bnd << std::endl;        // Debug Line 
          // Rcpp::Rcout << "trt1 bound[1]: "<< treat1_bnd[0] << std::endl;        // Debug Line 
          // Rcpp::Rcout << "trt1 bound[2]: "<< treat1_bnd[1] << std::endl;        // Debug Line 
          // Rcpp::Rcout << "trt2 bound[1]: "<< treat2_bnd[0] << std::endl;        // Debug Line 
@@ -549,12 +545,18 @@
                  return true;
          }
          
-         Rcpp::Rcout << "# of Qualified Split_can: "<< split_can.n_elem << std::endl;        // Debug Line    
+         // Rcpp::Rcout << "# of Qualified Split_can: "<< split_can.n_elem << std::endl;        // Debug Line    
          // Rcpp::Rcout << "Qualified Split_can: "<< split_can << std::endl;        // Debug Line 
          // Limit number of splits
          vec split_can_final = split_can.elem(randperm(split_can.n_elem, std::min(num_random_splits, split_can.n_elem)));
   
-          Rcpp::Rcout << "# of Randpom Split_can: "<< split_can_final.n_elem << std::endl;        // Debug Line          
+          // Rcpp::Rcout << "# of Randpom Split_can: "<< split_can_final.n_elem << std::endl;        // Debug Line          
+         
+         // Initiate variables for the final split results
+         double best_decrease = -1;
+         // vec best_coefs(ncol_x_b);
+         double best_value = 0;
+         rowvec x_b_center = mean(x_b,0);
          
          // TODO: calculate the variance reduction & Choose the best split
          findBestSplitValue(nodeID, //varID, sum_node, num_samples_node,
@@ -568,23 +570,47 @@
                  Rcpp::Rcout << "Terminal Node: Not decrease in variance reduction" << std::endl;        // Debug Line    
                  return true;
          }
+         
+         // Rcpp::Rcout << "Best Value" << std::endl; 
+         
          // 
          // Save best values
          // split_varIDs[nodeID] = best_varID;
          // split_values[nodeID] = best_value;
-         child_nodes[nodeID]->set_coef(best_coefs);
+         // child_nodes[nodeID]->set_coef(best_coefs);
+         child_nodes[nodeID]->set_coef(coef_x);
          // child_nodes[nodeID]->set_center(x_b_center);
-         child_nodes[nodeID]->set_value(best_value + dot(x_b_center, best_coefs));
+         child_nodes[nodeID]->set_value(best_value + dot(x_b_center, coef_x));
          child_nodes[nodeID]->set_leaf(false);
+         
+         // Rcpp::Rcout << "Best Coef is " << coef_x << std::endl;  // debug line
+         // Rcpp::Rcout << "x_b_center is " << x_b_center << std::endl;  // debug line  
+         // Rcpp::Rcout << "dot prod is " << dot(x_b_center, coef_x) << std::endl;  // debug line  
+         
+         // Rcpp::Rcout << "Best Split is " << best_value << std::endl;  // debug line
+         // Rcpp::Rcout << "Best Split after is " << best_value + dot(x_b_center, coef_x) << std::endl; // debug line
+         
+         // uvec L_indices_proj = find(proj_x < best_value); // debug line
+         // uvec R_indices_proj = find(proj_x >= best_value);// debug line
+         // Rcpp::Rcout << "[Use Proj] # of Left Child is " << L_indices_proj.n_elem << std::endl;  // debug line
+         // Rcpp::Rcout << "[Use Proj] # of Right Child is " << R_indices_proj.n_elem << std::endl; // debug line
+         
+         // uvec L_indices = find(x_b*coef_x < best_value + dot(x_b_center, coef_x)); // debug line
+         // uvec R_indices = find(x_b*coef_x >= best_value + dot(x_b_center, coef_x));// debug line
+         // Rcpp::Rcout << "[add center] # of Left Child is " << L_indices.n_elem << std::endl;  // debug line
+         // Rcpp::Rcout << "[add center] # of Right Child is " << R_indices.n_elem << std::endl; // debug line
+         
+         
+         // throw std::runtime_error("Finished calculating Best Splits");          // debug line
          
          // 
          // Compute Varaible Importance
-         addImportance(nodeID, best_coefs);
+         addImportance(nodeID, coef_x);
          
          return false;
  }
  
- 
+ // TODO: Debug this function
  void Tree::findBestSplitValue(size_t nodeID, // size_t varID, size_t num_classes,
                                // const std::vector<size_t>& class_counts, 
                                // size_t num_samples_node, 
@@ -599,8 +625,8 @@
          for (size_t i = 0; i < num_unique - 1; ++i) {
                  
                  // Make the cut
-                 uvec L_indices = find(proj_x < split_can_final[i]);
-                 uvec R_indices = find(proj_x >= split_can_final[i]);
+                 uvec L_indices = find(proj_x <= split_can_final[i]);
+                 uvec R_indices = find(proj_x > split_can_final[i]);
                  size_t L_length = L_indices.n_elem;
                  size_t R_length = R_indices.n_elem;
                  
@@ -615,6 +641,7 @@
                          best_decrease = decrease;
                  }
          }
+         
  }
  
  void Tree::predict(const Data* prediction_data, bool oob_prediction) {
