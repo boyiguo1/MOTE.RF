@@ -171,15 +171,18 @@
    // // virtual void allocatePredictMemory() = 0;
    // // virtual void predictInternal(size_t sample_idx) = 0;
    // 
-   // void computePredictionError();
-   // // virtual void computePredictionErrorInternal() = 0;
+   void computePredictionError();
+   void computePredictionErrorInternal();
    // 
    // void computePermutationImportance();
    // 
    // Multithreading methods for growing/prediction/importance, called by each thread
    void growTreesInThread(uint thread_idx, vec* variable_importance);
-   // void predictTreesInThread(uint thread_idx, const Data* prediction_data, bool oob_prediction);
-   // void predictInternalInThread(uint thread_idx);
+   void predictTreesInThread(uint thread_idx, const Data* prediction_data, bool oob_prediction);
+   void predictInternalInThread(uint thread_idx);
+   
+   //TODO: update the return type to probably List;
+   Node* getTreePrediction(size_t tree_idx, size_t sample_idx) const;
    // void computeTreePermutationImportanceInThread(uint thread_idx, std::vector<double>& importance,
    //                                               std::vector<double>& variance, std::vector<double>& importance_casewise);
    // 
@@ -240,8 +243,10 @@
    std::vector<std::unique_ptr<Tree>> trees;
    std::unique_ptr<Data> data;
    
-   std::vector<std::vector<std::vector<double>>> predictions;
-   double overall_prediction_error;
+   // std::vector<std::vector<std::vector<double>>> predictions;
+   mat predictions;
+   
+   // double overall_prediction_error;
    
    // Weight vector for selecting possible split variables, one weight between 0 (never select) and 1 (always select) for each variable
    // Deterministic variables are always selected

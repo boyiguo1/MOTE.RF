@@ -79,6 +79,10 @@ using namespace arma;
       return num_cols;
    }
    
+   size_t get_y_cols() const {
+      return y_diff.n_cols;
+   }
+   
    vec get_trt() const {
       return trt;
    }

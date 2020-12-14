@@ -78,8 +78,25 @@ public:
     return(this->n1 + this->n2);
   }
   
+  size_t get_n1(){
+    return(this->n1);
+  }
+  
+  size_t get_n2(){
+    return(this->n2);
+  }
+  
+  rowvec get_outcome1(){
+    return(this->Outcome_1);
+  }
+  
+  rowvec get_outcome2(){
+    return(this->Outcome_2);
+  }
+  
 private:
   // Terminal node=true, internal node=false
+  // TODO: Seems useless
   bool leaf;
   
   // arma::vec xcenter;

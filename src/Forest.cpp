@@ -26,7 +26,8 @@
                  sample_with_replacement(true), // memory_saving_splitting(false), splitrule(DEFAULT_SPLITRULE), 
                  predict_all(false), keep_inbag(false), sample_fraction( { 1 }), holdout(false), // prediction_type(DEFAULT_PREDICTIONTYPE), 
                  num_random_splits(DEFAULT_NUM_RANDOM_SPLITS), max_depth(DEFAULT_MAXDEPTH),
-                 minprop(DEFAULT_MINPROP), num_threads(DEFAULT_NUM_THREADS), data { }, overall_prediction_error(NAN), progress(0) {
+                 minprop(DEFAULT_MINPROP), num_threads(DEFAULT_NUM_THREADS), data { }, //overall_prediction_error(NAN),
+                 progress(0) {
                  }
  
  void Forest::initR(std::unique_ptr<Data> input_data, //uint mtry, 
@@ -67,7 +68,7 @@
                  this->manual_inbag = manual_inbag;
          }
          
- 
+         
          
          // Keep inbag counts
          this->keep_inbag = keep_inbag;
@@ -259,11 +260,12 @@
                  }
                  
                  // TODO: implement this part
-                 // if (compute_oob_error) {
-                 //         computePredictionError();
-                 // }
+                 if (compute_oob_error) {
+                         computePredictionError();
+                 }
                  
                  // unneccssary files
+                 // TODO: Delete this part
                  // if (importance_mode == IMP_PERM_BREIMAN || importance_mode == IMP_PERM_LIAW || importance_mode == IMP_PERM_RAW
                  //             || importance_mode == IMP_PERM_CASEWISE) {
                  //         if (verbose && verbose_out) {
@@ -324,7 +326,7 @@
          // throw std::runtime_error("Finish Building the example tree");   //Debug line
          
          // *verbose_out << "Initialize Variable_imporantace" << std::endl;               //Debug line
-       
+         
          // Grow trees in multiple threads
 #ifdef OLD_WIN_R_BUILD
          // #nocov start
@@ -344,10 +346,10 @@
          aborted = false;
          aborted_threads = 0;
 #endif
-
+         
          std::vector<std::thread> threads;
          threads.reserve(num_threads);
-
+         
          // Initialize importance per thread
          std::vector<vec> variable_importance_threads(num_threads);
          *verbose_out << "Start to Fit Tree Parallell" << std::endl;               //Debug line
@@ -363,13 +365,13 @@
          for (auto &thread : threads) {
                  thread.join();
          }
-
+         
 #ifdef R_BUILD
          if (aborted_threads > 0) {
                  throw std::runtime_error("User interrupt.");
          }
 #endif
-
+         
          // Sum thread importances
          //          if (importance_mode == IMP_GINI || importance_mode == IMP_GINI_CORRECTED || importance_mode == IMP_GINI_OOB) {
          variable_importance = vec(num_independent_variables, fill::zeros);
@@ -381,7 +383,7 @@
          // TODO: remove useless vec
          //                  variable_importance_threads.clear();
          // }
-
+         
 #endif
          //          
          //          // Divide importance by number of trees
@@ -392,7 +394,7 @@
          //          }
          // *verbose_out << "End Growing Trees" << std::endl;               //Debug line
  }
-
+ 
  
  
 #ifndef OLD_WIN_R_BUILD
@@ -450,16 +452,16 @@
          using std::chrono::steady_clock;
          using std::chrono::duration_cast;
          using std::chrono::seconds;
-
+         
          steady_clock::time_point start_time = steady_clock::now();
          steady_clock::time_point last_time = steady_clock::now();
          std::unique_lock<std::mutex> lock(mutex);
-
+         
          // Wait for message from threads and show output if enough time elapsed
          while (progress < max_progress) {
                  condition_variable.wait(lock);
                  seconds elapsed_time = duration_cast<seconds>(steady_clock::now() - last_time);
-
+                 
                  // Check for user interrupt
 #ifdef R_BUILD
                  if (!aborted && checkInterrupt()) {
@@ -469,7 +471,7 @@
                          return;
                  }
 #endif
-
+                 
                  if (progress > 0 && elapsed_time.count() > STATUS_INTERVAL) {
                          double relative_progress = (double) progress / (double) max_progress;
                          seconds time_from_start = duration_cast<seconds>(steady_clock::now() - start_time);
@@ -483,6 +485,135 @@
          }
  }
 #endif
+ 
+ 
+ void Forest::computePredictionError() {
+         
+         // Predict trees in multiple threads
+#ifdef OLD_WIN_R_BUILD
+         // #nocov start
+         progress = 0;
+         clock_t start_time = clock();
+         clock_t lap_time = clock();
+         for (size_t i = 0; i < num_trees; ++i) {
+                 trees[i]->predict(data.get(), true);
+                 progress++;
+                 showProgress("Predicting..", start_time, lap_time);
+         }
+         // #nocov end
+#else
+         std::vector<std::thread> threads;
+         threads.reserve(num_threads);
+         progress = 0;
+         for (uint i = 0; i < num_threads; ++i) {
+                 threads.emplace_back(&Forest::predictTreesInThread, this, i, data.get(), true);
+         }
+         showProgress("Computing prediction error..", num_trees);
+         for (auto &thread : threads) {
+                 thread.join();
+         }
+         
+#ifdef R_BUILD
+         if (aborted_threads > 0) {
+                 throw std::runtime_error("User interrupt.");
+         }
+#endif
+#endif
+         
+         // Call special function for subclasses
+         // TODO: mod this function
+         computePredictionErrorInternal();
+ }
+ 
+ void Forest::predictTreesInThread(uint thread_idx, const Data* prediction_data, bool oob_prediction) {
+         if (thread_ranges.size() > thread_idx + 1) {
+                 for (size_t i = thread_ranges[thread_idx]; i < thread_ranges[thread_idx + 1]; ++i) {
+                         trees[i]->predict(prediction_data, oob_prediction);
+                         
+                         // Check for user interrupt
+#ifdef R_BUILD
+                         if (aborted) {
+                                 std::unique_lock<std::mutex> lock(mutex);
+                                 ++aborted_threads;
+                                 condition_variable.notify_one();
+                                 return;
+                         }
+#endif
+                         
+                         // Increase progress by 1 tree
+                         std::unique_lock<std::mutex> lock(mutex);
+                         ++progress;
+                         condition_variable.notify_one();
+                 }
+         }
+ }
+ 
+ 
+ /* OOB is calculated by averaging the predicted treat effect  by the number of trees*/
+ void Forest::computePredictionErrorInternal() {
+         
+         // For each sample sum over trees where sample is OOB
+         // TODO: need to revise this part
+         std::vector<size_t> samples_oob_count;
+
+         // predictions = std::vector<std::vector<std::vector<double>>>(1,
+         //                                                             std::vector<std::vector<double>>(1, std::vector<double>(num_samples, 0)));
+        //
+        
+        size_t q = data->get_y_cols();
+        
+        mat outcome_1 = mat(num_samples, q, fill::zeros);
+        mat outcome_2 = mat(num_samples, q, fill::zeros);
+        uvec size_1 = uvec(num_samples, fill::zeros);
+        uvec size_2 = uvec(num_samples, fill::zeros);
+        
+         samples_oob_count.resize(num_samples, 0);
+         for (size_t tree_idx = 0; tree_idx < num_trees; ++tree_idx) {
+                 for (size_t sample_idx = 0; sample_idx < trees[tree_idx]->getNumSamplesOob(); ++sample_idx) {
+                         size_t sampleID = trees[tree_idx]->getOobSampleIDs()[sample_idx];
+                         
+                         Node* tmp_node = getTreePrediction(tree_idx, sample_idx);
+                         
+                         //update weighted ave info
+                         
+                         // predictions[0][0][sampleID] += value;
+                         outcome_1.row(sampleID) += tmp_node -> get_outcome1();
+                         outcome_2.row(sampleID) += tmp_node -> get_outcome2();
+                         size_1(sampleID) += tmp_node->get_n1();
+                         size_2(sampleID) += tmp_node->get_n2();
+                         
+                         ++samples_oob_count[sampleID];
+                 }
+         }
+         
+         
+         // TODO: update Prediction
+         // TODO: Allocate memory for prediction & Update the definition in Forest.h
+         predictions = mat(num_samples, q, fill::zeros);
+         for (size_t i = 0; i < predictions.n_rows; ++i) {
+                 if (samples_oob_count[i] > 0) {
+                         // Update Prediction with diff of the weighted average
+                         predictions.row(i) = (outcome_2.row(i)/size_1(i)) - (outcome_1.row(i)/size_1(i));
+                         // TODO: remove followings;
+                         // predictions[0][0][i] /= (double) samples_oob_count[i];
+                         // double predicted_value = predictions[0][0][i];
+                         // double real_value = data->get_y(i, 0);
+                 } else {
+                         // fill with NAN's
+                         // predictions.row(i) = NAN;
+                         predictions.row(i) = datum::nan;
+                 }
+         }
+         
+ }
+ 
+ // TODO update return type to a list
+ Node* Forest::getTreePrediction(size_t tree_idx, size_t sample_idx) const {
+         // TODO: test if the non-casting version works
+         const auto& tree = dynamic_cast<const Tree&>(*trees[tree_idx]);
+         return tree.getPrediction(sample_idx);
+ }
+ 
  
  } // namespace MOTE
  

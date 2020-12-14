@@ -644,6 +644,8 @@
          
  }
  
+ 
+ /* returns the terminal node ID*/
  void Tree::predict(const Data* prediction_data, bool oob_prediction) {
          
          size_t num_samples_predict;
@@ -672,6 +674,7 @@
                          }
                          
                          // Move to child
+                         // TODO: delete this line
                          // size_t split_varID = split_varIDs[nodeID];
                          
                          double value = dot(prediction_data->get_x_b_rows(sample_idx), child_nodes[nodeID]->get_coefs());

@@ -62,6 +62,13 @@
         return inbag_counts;
     }
     
+    //TODO: return type may need to be a pointer, since child_nodes contains unique pointers
+    Node* getPrediction(size_t sampleID) const {
+    // Node* getPrediction(size_t sampleID) {
+        size_t terminal_nodeID = prediction_terminal_nodeIDs[sampleID];
+        return child_nodes[terminal_nodeID].get();
+    }
+    
     
  protected:
     
