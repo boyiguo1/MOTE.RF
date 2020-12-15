@@ -400,10 +400,10 @@ MOTE <- function(#formula = NULL, data = NULL,
   names(result$variable.importance) <- all.independent.variable.names
   
   if (oob.error) {
-    ## TODO:organize the structure for prediction results
+    # # TODO:organize the structure for prediction results
     # if (is.list(result$predictions)) {
     #   result$predictions <- do.call(rbind, result$predictions)
-    # } 
+    # }
     # if (is.vector(result$predictions)) {
     #   result$predictions <- matrix(result$predictions, nrow = 1)
     # }
@@ -412,18 +412,18 @@ MOTE <- function(#formula = NULL, data = NULL,
   # TODO: is it possible to calculate r.squared for us
   # result$r.squared <- 1 - result$prediction.error / var(y)
   result$call <- sys.call()
-  if (use.sparse.data) {
-    result$num.samples <- nrow(sparse.x)
-  } else {
-    result$num.samples <- nrow(x)
-  }
+  # if (use.sparse.data) {
+  #   result$num.samples <- nrow(sparse.x)
+  # } else {
+    result$num.samples <- nrow(x.b.new)
+  # }
   result$replace <- replace
   
   ## Write forest object
   if (write.forest) {
-    if (is.factor(y)) {
-      result$forest$levels <- levels(y)
-    }
+    # if (is.factor(y)) {
+    #   result$forest$levels <- levels(y)
+    # }
     result$forest$independent.variable.names <- independent.variable.names
     class(result$forest) <- "MOTE.forest"
     

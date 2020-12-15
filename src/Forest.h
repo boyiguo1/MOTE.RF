@@ -129,9 +129,9 @@
    // double getOverallPredictionError() const {
    //   return overall_prediction_error;
    // }
-   // const std::vector<std::vector<std::vector<double>>>& getPredictions() const {
-   //   return predictions;
-   // }
+   const mat& getPredictions() const {
+     return predictions;
+   }
    size_t getNumTrees() const {
      return num_trees;
    }

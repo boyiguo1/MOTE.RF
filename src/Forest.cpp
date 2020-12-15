@@ -519,9 +519,10 @@
          }
 #endif
 #endif
+         Rcpp::Rcout << "Finished Tree Predicting" << std::endl;        // Debug Line
+         
          
          // Call special function for subclasses
-         // TODO: mod this function
          computePredictionErrorInternal();
  }
  
@@ -566,8 +567,9 @@
         mat outcome_2 = mat(num_samples, q, fill::zeros);
         uvec size_1 = uvec(num_samples, fill::zeros);
         uvec size_2 = uvec(num_samples, fill::zeros);
-        
          samples_oob_count.resize(num_samples, 0);
+         
+         Rcpp::Rcout << "After init space" << std::endl;        // Debug Line
          for (size_t tree_idx = 0; tree_idx < num_trees; ++tree_idx) {
                  for (size_t sample_idx = 0; sample_idx < trees[tree_idx]->getNumSamplesOob(); ++sample_idx) {
                          size_t sampleID = trees[tree_idx]->getOobSampleIDs()[sample_idx];
@@ -586,7 +588,7 @@
                  }
          }
          
-         
+         Rcpp::Rcout << "After retrieving data" << std::endl;        // Debug Line
          // TODO: update Prediction
          // TODO: Allocate memory for prediction & Update the definition in Forest.h
          predictions = mat(num_samples, q, fill::zeros);
@@ -601,9 +603,14 @@
                  } else {
                          // fill with NAN's
                          // predictions.row(i) = NAN;
-                         predictions.row(i) = datum::nan;
+                         Rcpp::Rcout << "Setting Nan for prediction" << std::endl;        // Debug Line
+                         // predictions.row(i) = datum::nan;
+                         predictions.row(i).fill(datum::nan);
+                         Rcpp::Rcout << "Success" << std::endl;        // Debug Line
                  }
          }
+         
+
          
  }
  

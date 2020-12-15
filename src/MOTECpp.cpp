@@ -162,36 +162,36 @@
        //     result.push_back(forest->getPredictions()[0], "predictions");
        //   }
        // } else {
-       //   result.push_back(forest->getPredictions(), "predictions");
+         result.push_back(forest->getPredictions(), "predictions");
        // }
        //
        // Return output
-       // result.push_back(forest->getNumTrees(), "num.trees");
+       result.push_back(forest->getNumTrees(), "num.trees");
        // result.push_back(forest->getNumIndependentVariables(), "num.independent.variables");
        // 
-       // if (!prediction_mode) {
-       //    result.push_back(forest->getMinNodeSize(), "min.node.size");
-       //    result.push_back(forest->getVariableImportance(), "variable.importance");
+       if (!prediction_mode) {
+          result.push_back(forest->getMinNodeSize(), "min.node.size");
+          result.push_back(forest->getVariableImportance(), "variable.importance");
        // 
-       //    // TODO: expand this function
-       //    //   result.push_back(forest->getOverallPredictionError(), "prediction.error");
-       // }
-       // 
-       // if (keep_inbag) {
-       //    result.push_back(forest->getInbagCounts(), "inbag.counts");
-       // }
-       // 
-       // // Save forest if needed
-       // if (write_forest) {
-       //    Rcpp::List forest_object;
-       //    forest_object.push_back(forest->getNumTrees(), "num.trees");
-       //    // TODO: customize to accomadate to our forest structure
-       //    //   forest_object.push_back(forest->getChildNodeIDs(), "child.nodeIDs");
-       //    //   forest_object.push_back(forest->getSplitVarIDs(), "split.varIDs");
-       //    //   forest_object.push_back(forest->getSplitValues(), "split.values");
-       // 
-       //    result.push_back(forest_object, "forest");
-       // }
+       //    // TODO: delete this
+            // result.push_back(forest->getOverallPredictionError(), "prediction.error");
+       }
+
+       if (keep_inbag) {
+          result.push_back(forest->getInbagCounts(), "inbag.counts");
+       }
+
+       // Save forest if needed
+       if (write_forest) {
+          Rcpp::List forest_object;
+          forest_object.push_back(forest->getNumTrees(), "num.trees");
+          // TODO: customize to accomadate to our forest structure
+          //   forest_object.push_back(forest->getChildNodeIDs(), "child.nodeIDs");
+          //   forest_object.push_back(forest->getSplitVarIDs(), "split.varIDs");
+          //   forest_object.push_back(forest->getSplitValues(), "split.values");
+
+          result.push_back(forest_object, "forest");
+       }
 
        if (!verbose) {
           delete verbose_out;
