@@ -70,6 +70,33 @@
     }
     
     
+    std::vector<Rcpp::List> getNodes() const{
+        std::vector<Rcpp::List> result;
+        for(auto& node : child_nodes){
+            Rcpp::List tmp;
+            tmp.push_back(node->get_value(), "split_value");
+            tmp.push_back(node->get_coefs(), "coefs");
+            tmp.push_back(node->get_n1(), "n1");
+            tmp.push_back(node->get_n2(), "n2");
+            tmp.push_back(node->get_outcome1(), "Outcome_1");
+            tmp.push_back(node->get_outcome2(), "Outcome_2");
+            result.push_back(tmp);
+            
+        }
+        return result;
+
+    }
+    
+    // std::vector<std::unique_ptr<Node>>& getNodes(){
+    //     return child_nodes;
+    // }
+    
+    
+    const std::vector<std::vector<size_t>>& getChildNodeIDs() const {
+        return child_nodeIDs;
+    }
+    
+    
  protected:
     
     void createEmptyNode();
@@ -97,7 +124,7 @@
                                 double& best_decrease);
     
     // Update Variance Importance 
-    void addImportance(size_t nodeID, const vec& coefs);
+    // void addImportance(size_t nodeID, const vec& coefs);
     
     
     // uint mtry;

@@ -605,7 +605,13 @@
          
          // 
          // Compute Varaible Importance
-         addImportance(nodeID, coef_x);
+         // addImportance(nodeID, coef_x);  // TO Delete
+         // Rcpp::Rcout <<  "Sample Size" << child_nodes[nodeID]->get_samplesize() << std::endl; // Debug Line
+         // Rcpp::Rcout << coef_x << std::endl; // Debug Line
+         vec incrmt  = n * coef_x;
+         // Rcpp::Rcout << "incrmt:" << incrmt << std::endl; // Debug Line
+         (*variable_importance) += incrmt;
+         // Rcpp::Rcout << "variable_importance:" << *variable_importance << std::endl; // Debug Line
          
          return false;
  }
@@ -705,14 +711,22 @@
          }
  }
  
- 
- void Tree::addImportance(size_t nodeID, const vec& coefs){
-         
-         vec incrmt  = (child_nodes[nodeID]->get_samplesize()) * coefs;
-         
-         (*variable_importance) += incrmt;
- }
- 
+ // TODO: could be removed
+ // void Tree::addImportance(size_t nodeID, const vec& coefs){
+ //   
+ //        // if((child_nodes[nodeID]->get_samplesize())==0)    // Debug Line
+ //        //   throw std::runtime_error("sample size is 0");   // Debug Line
+ //        Rcpp::Rcout <<  "Sample Size" << child_nodes[nodeID]->get_samplesize() << std::endl; // Debug Line
+ //   
+ //   Rcpp::Rcout << coefs << std::endl; // Debug Line
+ //   
+ //         vec incrmt  = (child_nodes[nodeID]->get_samplesize()) * coefs;
+ //        Rcpp::Rcout << "incrmt:" << incrmt << std::endl; // Debug Line
+ //        
+ //         
+ //         (*variable_importance) += incrmt;
+ // }
+ // 
  
 
  } // namespace MOTE
