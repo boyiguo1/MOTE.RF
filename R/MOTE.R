@@ -399,7 +399,7 @@ MOTE <- function(#formula = NULL, data = NULL,
   # Varable importance
   names(result$variable.importance) <- all.independent.variable.names
   
-  if (oob.error) {
+  # if (oob.error) {
     # # TODO:organize the structure for prediction results
     # if (is.list(result$predictions)) {
     #   result$predictions <- do.call(rbind, result$predictions)
@@ -407,7 +407,7 @@ MOTE <- function(#formula = NULL, data = NULL,
     # if (is.vector(result$predictions)) {
     #   result$predictions <- matrix(result$predictions, nrow = 1)
     # }
-  }
+  # }
   
   # TODO: is it possible to calculate r.squared for us
   # result$r.squared <- 1 - result$prediction.error / var(y)

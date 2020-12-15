@@ -186,9 +186,10 @@
           Rcpp::List forest_object;
           forest_object.push_back(forest->getNumTrees(), "num.trees");
           // TODO: customize to accomadate to our forest structure
-          //   forest_object.push_back(forest->getChildNodeIDs(), "child.nodeIDs");
+            forest_object.push_back(forest->getChildNodeIDs(), "child.nodeIDs");
           //   forest_object.push_back(forest->getSplitVarIDs(), "split.varIDs");
-          //   forest_object.push_back(forest->getSplitValues(), "split.values");
+            // forest_object.push_back(forest->getSplitValues(), "split.values");
+            forest_object.push_back(forest->getNodes(), "child.nodes");
 
           result.push_back(forest_object, "forest");
        }

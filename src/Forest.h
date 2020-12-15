@@ -99,13 +99,14 @@
    // void saveToFile();
    // // virtual void saveToFileInternal(std::ofstream& outfile) = 0;
    // 
-   // std::vector<std::vector<std::vector<size_t>>> getChildNodeIDs() {
-   //   // std::vector<std::vector<std::vector<size_t>>> result;
-   //   // for (auto& tree : trees) {
-   //   //   result.push_back(tree->getChildNodeIDs());
-   //   // }
-   //   // return result;
-   // }
+   std::vector<std::vector<std::vector<size_t>>> getChildNodeIDs() {
+     std::vector<std::vector<std::vector<size_t>>> result;
+     for (auto& tree : trees) {
+       result.push_back(tree->getChildNodeIDs());
+     }
+     return result;
+   }
+   
    // std::vector<std::vector<size_t>> getSplitVarIDs() {
    //   // std::vector<std::vector<size_t>> result;
    //   // for (auto& tree : trees) {
@@ -113,13 +114,25 @@
    //   // }
    //   // return result;
    // }
+   
    // std::vector<std::vector<double>> getSplitValues() {
-   //   // std::vector<std::vector<double>> result;
-   //   // for (auto& tree : trees) {
-   //   //   result.push_back(tree->getSplitValues());
-   //   // }
-   //   // return result;
+   //   std::vector<std::vector<double>> result;
+   //   for (auto& tree : trees) {
+   //     result.push_back(tree->getSplitValues());
+   //   }
+   //   return result;
    // }
+   
+   std::vector< std::vector<Rcpp::List>> getNodes(){
+      std::vector< std::vector<Rcpp::List>> result;
+      for (auto& tree : trees) {
+         result.push_back(tree->getNodes());
+      }
+      return result;
+   }
+   
+   
+   
    const vec& getVariableImportance() const {
      return variable_importance;
    }

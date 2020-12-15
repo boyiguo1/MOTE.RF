@@ -323,6 +323,7 @@
          
          // Debug case when there is only tree
          // trees[1]->grow(&variable_importance); //Debug line
+         // *verbose_out << variable_importance << std::endl;               //Debug line
          // throw std::runtime_error("Finish Building the example tree");   //Debug line
          
          // *verbose_out << "Initialize Variable_imporantace" << std::endl;               //Debug line
@@ -602,11 +603,11 @@
                          // double real_value = data->get_y(i, 0);
                  } else {
                          // fill with NAN's
-                         // predictions.row(i) = NAN;
-                         Rcpp::Rcout << "Setting Nan for prediction" << std::endl;        // Debug Line
+                         // predictions.row(i) = NAN;           // REmove
+                         // Rcpp::Rcout << "Setting Nan for prediction" << std::endl;        // Debug Line
                          // predictions.row(i) = datum::nan;
                          predictions.row(i).fill(datum::nan);
-                         Rcpp::Rcout << "Success" << std::endl;        // Debug Line
+                         // Rcpp::Rcout << "Success" << std::endl;        // Debug Line
                  }
          }
          
