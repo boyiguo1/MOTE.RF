@@ -16,21 +16,27 @@ class Node{
 public:
   Node():
   // Another option for initiaing split_valu is std::numeric_limits<double>::quiet_NaN()
-  leaf(false), split_value(0), n1(0), n2(0){
+  // leaf(false),
+  split_value(0), n1(0), n2(0){
   };
   
-  // Node(arma::vec& Outcome_1, arma::vec& Outcome_2,
-  //      arma::vec& xcenter,
-  //      arma::vec& coefs,
-  //      bool leaf,
-  //      double split_value){
-  //   this->Outcome_1 = Outcome_1;
-  //   this->Outcome_2 = Outcome_2;
-  //   this->xcenter = xcenter;
-  //   this->coefs = coefs;
-  //   this->leaf = leaf;
-  //   this->split_value = split_value;
-  // }
+  Node(arma::rowvec& Outcome_1, arma::rowvec& Outcome_2,
+       // arma::vec& xcenter,
+       arma::vec& coefs,
+       // bool leaf,
+       double split_value,
+       size_t n1,
+       size_t n2){
+    
+    this->n1 = n1;
+    this->n2 = n2;
+    this->Outcome_1 = Outcome_1;
+    this->Outcome_2 = Outcome_2;
+    // this->xcenter = xcenter;
+    this->coefs = coefs;
+    // this->leaf = leaf;
+    this->split_value = split_value;
+  }
   
 
   
@@ -39,9 +45,9 @@ public:
   
   // ?? Add setter and getter functions
   
-  void set_leaf(bool value) {
-    this->leaf = value;
-  }
+  // void set_leaf(bool value) {
+  //   this->leaf = value;
+  // }
   
   void set_n(size_t n1, size_t n2) {
     this->n1 = n1;
@@ -97,7 +103,7 @@ public:
 private:
   // Terminal node=true, internal node=false
   // TODO: Seems useless
-  bool leaf;
+  // bool leaf;
   
   // arma::vec xcenter;
   arma::vec coefs;

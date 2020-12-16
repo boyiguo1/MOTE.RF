@@ -86,7 +86,14 @@
    // Grow or predict
    void run(bool verbose, bool compute_oob_error);
    
-
+   // Load Prediction model
+   // TODO: Modify
+   void loadForest(size_t num_trees, std::vector<std::vector<std::vector<size_t>> >& forest_child_nodeIDs,
+                   std::vector< std::vector<Rcpp::List>>& forest_child_nodes
+                   // std::vector<std::vector<size_t>>& forest_split_varIDs,
+                   // std::vector<std::vector<double>>& forest_split_values//,
+                   // std::vector<bool>& is_ordered_variable
+                      );
    // 
    // // Write results to output files
    // void writeOutput();
@@ -179,10 +186,10 @@
    void grow();
    // void growInternal();    // Don't need anymore
    // 
-   // // Predict using existing tree from file and data as prediction data
-   // void predict();
-   // // virtual void allocatePredictMemory() = 0;
-   // // virtual void predictInternal(size_t sample_idx) = 0;
+   // Predict using existing tree from file and data as prediction data
+   void predict();
+   void allocatePredictMemory();
+   void predictInternal(size_t sample_idx);
    // 
    void computePredictionError();
    void computePredictionErrorInternal();

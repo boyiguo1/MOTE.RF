@@ -28,9 +28,11 @@
     Tree();
     
     // Create from loaded forest
-    // Tree(std::vector<std::vector<size_t>>& child_nodeIDs, std::vector<size_t>& split_varIDs,
-    //      std::vector<double>& split_values);
-    // 
+    Tree(std::vector<std::vector<size_t>>& child_nodeIDs,
+         std::vector<Rcpp::List>& child_nodes
+         // std::vector<size_t>& split_varIDs,std::vector<double>& split_values
+        );
+
     
     Tree(const Tree&) = delete;
     Tree& operator=(const Tree&) = delete;

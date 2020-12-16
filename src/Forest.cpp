@@ -170,6 +170,9 @@
          // }
  }
  
+ 
+ 
+ 
  void Forest::initInternal() {
          
          // If mtry not set, use floored square root of number of independent variables
@@ -240,6 +243,33 @@
          // }
  }
  
+ //. TODO: to modify
+ void Forest::loadForest(size_t num_trees,
+                         std::vector<std::vector<std::vector<size_t>> >& forest_child_nodeIDs,
+                         std::vector< std::vector<Rcpp::List>>& forest_child_nodes//,
+                                 // TODO: lost child_node list list
+                                 // std::vector<std::vector<size_t>>& forest_split_varIDs, 
+                                 // std::vector<std::vector<double>>& forest_split_values,
+                                 // std::vector<bool>& is_ordered_variable
+ ) {
+         
+         this->num_trees = num_trees;
+         // data->setIsOrderedVariable(is_ordered_variable);    // TODO Delete
+         
+         // Create trees
+         trees.reserve(num_trees);
+         for (size_t i = 0; i < num_trees; ++i) {
+                 trees.push_back(
+                         make_unique<Tree>(forest_child_nodeIDs[i], 
+                                           forest_child_nodes[i]// forest_split_varIDs[i], forest_split_values[i]
+                         )
+                 );
+         }
+         
+         // Create thread ranges
+         equalSplit(thread_ranges, 0, num_trees - 1, num_threads);
+ }
+ 
  void Forest::run(bool verbose, bool compute_oob_error) {
          
          if (prediction_mode) {
@@ -247,7 +277,7 @@
                          *verbose_out << "Predicting .." << std::endl;
                  }
                  // TODO: implement predict function
-                 // predict();
+                 predict();
          } else {
                  if (verbose && verbose_out) {
                          *verbose_out << "Growing trees .." << std::endl;
@@ -259,7 +289,6 @@
                          *verbose_out << "Computing prediction error .." << std::endl;
                  }
                  
-                 // TODO: implement this part
                  if (compute_oob_error) {
                          computePredictionError();
                  }
@@ -394,6 +423,65 @@
          //                  }
          //          }
          // *verbose_out << "End Growing Trees" << std::endl;               //Debug line
+ }
+ 
+ void Forest::predict() {
+         
+         // Predict trees in multiple threads and join the threads with the main thread
+#ifdef OLD_WIN_R_BUILD
+         // #nocov start
+         progress = 0;
+         clock_t start_time = clock();
+         clock_t lap_time = clock();
+         for (size_t i = 0; i < num_trees; ++i) {
+                 trees[i]->predict(data.get(), false);
+                 progress++;
+                 showProgress("Predicting..", start_time, lap_time);
+         }
+         
+         // For all samples get tree predictions
+         allocatePredictMemory();
+         for (size_t sample_idx = 0; sample_idx < data->getNumRows(); ++sample_idx) {
+                 predictInternal(sample_idx);
+         }
+         // #nocov end
+#else
+         progress = 0;
+#ifdef R_BUILD
+         aborted = false;
+         aborted_threads = 0;
+#endif
+         
+         // Predict
+         std::vector<std::thread> threads;
+         threads.reserve(num_threads);
+         for (uint i = 0; i < num_threads; ++i) {
+                 threads.emplace_back(&Forest::predictTreesInThread, this, i, data.get(), false);
+         }
+         showProgress("Predicting..", num_trees);
+         for (auto &thread : threads) {
+                 thread.join();
+         }
+         
+         // Aggregate predictions
+         allocatePredictMemory();
+         threads.clear();
+         threads.reserve(num_threads);
+         progress = 0;
+         for (uint i = 0; i < num_threads; ++i) {
+                 threads.emplace_back(&Forest::predictInternalInThread, this, i);
+         }
+         showProgress("Aggregating predictions..", num_samples);
+         for (auto &thread : threads) {
+                 thread.join();
+         }
+         
+#ifdef R_BUILD
+         if (aborted_threads > 0) {
+                 throw std::runtime_error("User interrupt.");
+         }
+#endif
+#endif
  }
  
  
@@ -557,17 +645,17 @@
          // For each sample sum over trees where sample is OOB
          // TODO: need to revise this part
          std::vector<size_t> samples_oob_count;
-
+         
          // predictions = std::vector<std::vector<std::vector<double>>>(1,
          //                                                             std::vector<std::vector<double>>(1, std::vector<double>(num_samples, 0)));
-        //
-        
-        size_t q = data->get_y_cols();
-        
-        mat outcome_1 = mat(num_samples, q, fill::zeros);
-        mat outcome_2 = mat(num_samples, q, fill::zeros);
-        uvec size_1 = uvec(num_samples, fill::zeros);
-        uvec size_2 = uvec(num_samples, fill::zeros);
+         //
+         
+         size_t q = data->get_y_cols();
+         
+         mat outcome_1 = mat(num_samples, q, fill::zeros);
+         mat outcome_2 = mat(num_samples, q, fill::zeros);
+         uvec size_1 = uvec(num_samples, fill::zeros);
+         uvec size_2 = uvec(num_samples, fill::zeros);
          samples_oob_count.resize(num_samples, 0);
          
          Rcpp::Rcout << "After init space" << std::endl;        // Debug Line
@@ -592,11 +680,12 @@
          Rcpp::Rcout << "After retrieving data" << std::endl;        // Debug Line
          // TODO: update Prediction
          // TODO: Allocate memory for prediction & Update the definition in Forest.h
+         // TODO: should we consider filling the  matrix with missing
          predictions = mat(num_samples, q, fill::zeros);
          for (size_t i = 0; i < predictions.n_rows; ++i) {
                  if (samples_oob_count[i] > 0) {
                          // Update Prediction with diff of the weighted average
-                         predictions.row(i) = (outcome_2.row(i)/size_1(i)) - (outcome_1.row(i)/size_1(i));
+                         predictions.row(i) = (outcome_2.row(i)/size_2(i)) - (outcome_1.row(i)/size_1(i));
                          // TODO: remove followings;
                          // predictions[0][0][i] /= (double) samples_oob_count[i];
                          // double predicted_value = predictions[0][0][i];
@@ -611,7 +700,7 @@
                  }
          }
          
-
+         
          
  }
  
@@ -620,6 +709,97 @@
          // TODO: test if the non-casting version works
          const auto& tree = dynamic_cast<const Tree&>(*trees[tree_idx]);
          return tree.getPrediction(sample_idx);
+ }
+ 
+ 
+ void Forest::allocatePredictMemory() {
+         // throw std::runtime_error("Forest::allocatePredictMemory is not implemented");               // Debug Line
+         size_t num_prediction_samples = data->getNumRows();
+         size_t q = data->get_y_cols();
+         // if (predict_all || prediction_type == TERMINALNODES) {
+         //         predictions = std::vector<std::vector<std::vector<double>>>(1,
+         //                                                                     std::vector<std::vector<double>>(num_prediction_samples, std::vector<double>(num_trees)));
+         // } else {
+         //         predictions = std::vector<std::vector<std::vector<double>>>(1,
+         //                                                                     std::vector<std::vector<double>>(1, std::vector<double>(num_prediction_samples)));
+         // }
+         
+         predictions = mat(num_prediction_samples, q);
+         // predictions = mat(num_prediction_samples, q, fill::zeros);
+ }
+ 
+ void Forest::predictInternal(size_t sample_idx) {
+         
+         // throw std::runtime_error("Forest::predictInternal is not implemented");               // Debug Line
+         
+         // if (predict_all || prediction_type == TERMINALNODES) {
+         //         // Get all tree predictions
+         //         for (size_t tree_idx = 0; tree_idx < num_trees; ++tree_idx) {
+         //                 if (prediction_type == TERMINALNODES) {
+         //                         predictions[0][sample_idx][tree_idx] = getTreePredictionTerminalNodeID(tree_idx, sample_idx);
+         //                 } else {
+         //                         predictions[0][sample_idx][tree_idx] = getTreePrediction(tree_idx, sample_idx);
+         //                 }
+         //         }
+         // } else {
+         //         // Mean over trees
+         //         double prediction_sum = 0;
+         //         for (size_t tree_idx = 0; tree_idx < num_trees; ++tree_idx) {
+         //                 prediction_sum += getTreePrediction(tree_idx, sample_idx);
+         //         }
+         //         predictions[0][0][sample_idx] = prediction_sum / num_trees;
+         // }
+         
+         
+         
+         
+         size_t q = data->get_y_cols();
+         
+         rowvec outcome_1(q, fill::zeros);
+         rowvec outcome_2(q, fill::zeros);
+         size_t size_1 = 0;
+         size_t size_2 = 0;
+         
+         for (size_t tree_idx = 0; tree_idx < num_trees; ++tree_idx) {
+                 Node* tmp_node = getTreePrediction(tree_idx, sample_idx);
+                 
+                 outcome_1 += tmp_node -> get_outcome1();
+                 outcome_2 += tmp_node -> get_outcome2();
+                 size_1 += tmp_node->get_n1();
+                 size_2 += tmp_node->get_n2();
+                 
+         }
+         
+         // Update Prediction with diff of the weighted average
+         predictions.row(sample_idx) = rowvec((outcome_2/size_2) - (outcome_1/size_1));
+         
+ }
+ 
+ void Forest::predictInternalInThread(uint thread_idx) {
+         // Create thread ranges
+         std::vector<uint> predict_ranges;
+         equalSplit(predict_ranges, 0, num_samples - 1, num_threads);
+         
+         if (predict_ranges.size() > thread_idx + 1) {
+                 for (size_t i = predict_ranges[thread_idx]; i < predict_ranges[thread_idx + 1]; ++i) {
+                         predictInternal(i);
+                         
+                         // Check for user interrupt
+#ifdef R_BUILD
+                         if (aborted) {
+                                 std::unique_lock<std::mutex> lock(mutex);
+                                 ++aborted_threads;
+                                 condition_variable.notify_one();
+                                 return;
+                         }
+#endif
+                         
+                         // Increase progress by 1 tree
+                         std::unique_lock<std::mutex> lock(mutex);
+                         ++progress;
+                         condition_variable.notify_one();
+                 }
+         }
  }
  
  
