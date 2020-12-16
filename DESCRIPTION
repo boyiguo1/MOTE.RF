@@ -7,7 +7,7 @@ Authors@R: c(
     person(given = "Boyi",
            family = "Guo",
            role = c("aut", "cre"),
-           email = "boyiguo1@uab.edu",
+           email = "boyiguo1992@gmail.com",
            comment = c(ORCID = "0000-0003-2950-2349")),
            person("Ruoqing", "Zhu",
            email = "teazrq@gmail.com", 
@@ -16,9 +16,13 @@ Authors@R: c(
            )
 Description: Multivariate Random Forest to estimate hetoerogeneous treatment effect for binary treatments.
 License: GPL (>= 2)
-Depends:	R (>= 3.6.0)
+Depends: R (>= 3.6.0)
 Imports: Rcpp (>= 1.0.5)
-LinkingTo: Rcpp
+LinkingTo: Rcpp, RcppArmadillo
 URL: https://github.com/boyiguo1/MOTE.RF
 BugReports: https://github.com/boyiguo1/MOTE.RF/issues
 RoxygenNote: 7.1.1
+Suggests: 
+    knitr,
+    rmarkdown
+VignetteBuilder: knitr

@@ -1,0 +1,60 @@
+---
+title: "Example"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Example}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE, eval=FALSE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(MOTE.RF)
+library(tidyverse)
+```
+
+## Simulate MOTE Data
+```{r}
+set.seed(1)
+B <- create.B(10)
+Z <- create.Z(10,3)
+
+sim.dat <- sim_MOTE_data(B = B, Z = Z)
+
+
+# Organize data by standardize
+train.dat <- sim.dat$train
+
+x.b <- train.dat$x.b
+x.e <- train.dat$x.e
+y.b <- train.dat$y.b
+y.e <- train.dat$y.e
+
+treat <- train.dat$trt
+
+
+# scaling test.dat
+# test.dat <- sim.dat$test
+# test.x.b <- test.dat$x.b
+# true.trt.diff <- test.dat$y.e.1 - test.dat$y.e.2
+
+```
+## Handling of Discrete Covariates
+
+## Handling of Missing Values
+
+
+## Random Forest Fitting
+```{r}
+# extreme random forest
+RF.mdl <- MOTE(x.b = x.b, x.e = x.e,
+               treat = treat,
+               y.b = y.b, y.e = y.e,
+               sample.fraction = rep(0.8,2))
+```
