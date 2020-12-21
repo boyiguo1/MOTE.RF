@@ -357,7 +357,7 @@ MOTE <- function(#formula = NULL, data = NULL,
   }
   
   
-  ## Prediction mode always false. Use predict.ranger() method.
+  ## Prediction mode always false. Use predict.MOTE() method.
   prediction.mode <- FALSE
   predict.all <- FALSE
   prediction.type <- 1
