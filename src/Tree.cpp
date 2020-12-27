@@ -550,7 +550,12 @@
          // Rcpp::Rcout << "trt1 bound[1]: "<< treat1_bnd[0] << std::endl;        // Debug Line 
          // Rcpp::Rcout << "trt1 bound[2]: "<< treat1_bnd[1] << std::endl;        // Debug Line 
          // Rcpp::Rcout << "trt2 bound[1]: "<< treat2_bnd[0] << std::endl;        // Debug Line 
-         // Rcpp::Rcout << "trt2 bound[2]: "<< treat2_bnd[1] << std::endl;        // Debug Line         
+         // Rcpp::Rcout << "trt2 bound[2]: "<< treat2_bnd[1] << std::endl;        // Debug Line     
+         
+         if(std::max(treat1_bnd(0), treat2_bnd(0)) > std::min(treat1_bnd(1), treat2_bnd(1))){
+            Rcpp::Rcout << "Terminal Node: LB > UB" << std::endl;        // Debug Line    
+            return true;
+         }
 
          vec split_can = unique(
                  clamp(
