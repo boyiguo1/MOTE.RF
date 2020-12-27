@@ -87,18 +87,18 @@
          // TODO: why this is DataRcpp
          // data = make_unique<DataRcpp>(input_x, input_y, variable_names, num_rows, num_cols);
          
-         Rcpp::Rcout<< ("Before making Data") << std::endl;        // Debug Line;
+         // Rcpp::Rcout<< ("Before making Data") << std::endl;        // Debug Line;
          
          data = make_unique<Data>(x_b, x_diff, 
                                   y_diff,
                                   trt, //Z, 
                                   variable_names, num_rows, num_cols);
          
-         Rcpp::Rcout<<("AFter making Data") << std::endl;       // Debug Line;
+         // Rcpp::Rcout<<("AFter making Data") << std::endl;       // Debug Line;
          
          forest = make_unique<Forest>();
          
-         Rcpp::Rcout << "Finish make_unique" << std::endl;        // Debug Line
+         // Rcpp::Rcout << "Finish make_unique" << std::endl;        // Debug Line
          
          
          // Init Ranger
@@ -115,7 +115,7 @@
                        max_depth
          );
          
-         Rcpp::Rcout << "Finish Forest Init" << std::endl;        // Debug Line
+         // Rcpp::Rcout << "Finish Forest Init" << std::endl;        // Debug Line
          
          // Load forest object if in prediction mode
          // TODO: need to implement this part
@@ -132,7 +132,7 @@
              //   temp.loadForest(num_trees, child_nodeIDs, split_varIDs, split_values, class_values,
              //                   is_ordered);
              // } else if (treetype == TREE_REGRESSION) {
-             Rcpp::Rcout << "Before loading previous forest" << std::endl;        // Debug Line
+             // Rcpp::Rcout << "Before loading previous forest" << std::endl;        // Debug Line
              
              auto& temp = dynamic_cast<Forest&>(*forest);
              temp.loadForest(num_trees, child_nodeIDs,
@@ -164,8 +164,8 @@
          }
          
          // Run Ranger
-         // forest->run(false, oob_error);        // original line
-         forest->run(true, oob_error);        // Debug Line
+         forest->run(false, oob_error);        // original line
+         // forest->run(true, oob_error);        // Debug Line
          
          
          // Use first non-empty dimension of predictions

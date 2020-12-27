@@ -54,7 +54,7 @@
                  prediction_mode, sample_with_replacement, 
                  predict_all, sample_fraction,  minprop, holdout,  num_random_splits, max_depth);
          
-         *verbose_out << "Finish Forest::init .." << std::endl;          //Debug line
+         // *verbose_out << "Finish Forest::init .." << std::endl;          //Debug line
          
          // Set case weights
          // if (!case_weights.empty()) {
@@ -130,9 +130,9 @@
          num_samples = data->getNumRows();
          num_independent_variables = data->getNumCols();
          
-         *verbose_out << "Forest::init Internal.." << std::endl;          //Debug line
+         // *verbose_out << "Forest::init Internal.." << std::endl;          //Debug line
          if(!prediction_mode) initInternal();
-         *verbose_out << "Finish Forest::initInternal .." << std::endl;          //Debug line
+         // *verbose_out << "Finish Forest::initInternal .." << std::endl;          //Debug line
          
          // Init manual inbag
          manual_inbag.push_back(std::vector<size_t>());
@@ -257,7 +257,7 @@
          this->num_trees = num_trees;
          // data->setIsOrderedVariable(is_ordered_variable);    // TODO Delete
          
-         *verbose_out << "Loading Forest .." << std::endl;          //Debug line
+         // *verbose_out << "Loading Forest .." << std::endl;          //Debug line
          
          // Create trees
          trees.reserve(num_trees);
@@ -269,7 +269,7 @@
                  );
          }
          
-         *verbose_out << "Finish Loading Forest .." << std::endl;          //Debug line
+         // *verbose_out << "Finish Loading Forest .." << std::endl;          //Debug line
          
          // Create thread ranges
          equalSplit(thread_ranges, 0, num_trees - 1, num_threads);
@@ -281,7 +281,7 @@
                  if (verbose && verbose_out) {
                          *verbose_out << "Predicting .." << std::endl;
                  }
-                 *verbose_out << "Predicting .." << std::endl;  // Debug line
+                 // *verbose_out << "Predicting .." << std::endl;  // Debug line
                  // TODO: implement predict function
                  predict();
          } else {
@@ -292,7 +292,7 @@
                  grow();
                  
                  if (verbose && verbose_out) {
-                         *verbose_out << "Computing prediction error .." << std::endl;
+                         // *verbose_out << "Computing prediction error .." << std::endl;
                  }
                  
                  if (compute_oob_error) {
@@ -300,7 +300,7 @@
                  }
                  
                  
-                 *verbose_out << "After computing OOB error" << std::endl; //Debug line
+                 // *verbose_out << "After computing OOB error" << std::endl; //Debug line
                  // unneccssary files
                  // TODO: Delete this part
                  // if (importance_mode == IMP_PERM_BREIMAN || importance_mode == IMP_PERM_LIAW || importance_mode == IMP_PERM_RAW
@@ -352,7 +352,7 @@
                                 &sample_fraction, minprop, holdout, num_random_splits, max_depth);
          }
          
-         *verbose_out << "Finish Initialize "<< num_trees<<" Trees in Grow" << std::endl;               //Debug line
+         // *verbose_out << "Finish Initialize "<< num_trees<<" Trees in Grow" << std::endl;               //Debug line
          
          // Init variable importance
          // variable_importance.resize(num_independent_variables, 0);
@@ -390,7 +390,7 @@
          
          // Initialize importance per thread
          std::vector<vec> variable_importance_threads(num_threads);
-         *verbose_out << "Start to Fit Tree Parallell" << std::endl;               //Debug line
+         // *verbose_out << "Start to Fit Tree Parallell" << std::endl;               //Debug line
          for (uint i = 0; i < num_threads; ++i) {
                  // TODO: Do I need to create for each one
                  // Yes I need
@@ -435,7 +435,7 @@
  
  void Forest::predict() {
          
-         *verbose_out << "In Forest::predict" << std::endl;               //Debug line
+         // *verbose_out << "In Forest::predict" << std::endl;               //Debug line
          
          // Predict trees in multiple threads and join the threads with the main thread
 #ifdef OLD_WIN_R_BUILD
@@ -474,7 +474,7 @@
          }
          
          
-         *verbose_out << "Congrugating results" << std::endl;               //Debug line
+         // *verbose_out << "Congrugating results" << std::endl;               //Debug line
          
          // Aggregate predictions
          allocatePredictMemory();
@@ -518,7 +518,7 @@
                          
                          // Increase progress by 1 tree
                          std::unique_lock<std::mutex> lock(mutex);
-                         *verbose_out << "Finish Growing Tree " << i << std::endl;         // Debug Line
+                         // *verbose_out << "Finish Growing Tree " << i << std::endl;         // Debug Line
                          ++progress;
                          condition_variable.notify_one();
                  }
@@ -621,7 +621,7 @@
          }
 #endif
 #endif
-         Rcpp::Rcout << "Finished Tree Predicting" << std::endl;        // Debug Line
+         // Rcpp::Rcout << "Finished Tree Predicting" << std::endl;        // Debug Line
          
          
          // Call special function for subclasses
@@ -671,7 +671,7 @@
          uvec size_2 = uvec(num_samples, fill::zeros);
          samples_oob_count.resize(num_samples, 0);
          
-         Rcpp::Rcout << "After init space" << std::endl;        // Debug Line
+         // Rcpp::Rcout << "After init space" << std::endl;        // Debug Line
          for (size_t tree_idx = 0; tree_idx < num_trees; ++tree_idx) {
                  for (size_t sample_idx = 0; sample_idx < trees[tree_idx]->getNumSamplesOob(); ++sample_idx) {
                          size_t sampleID = trees[tree_idx]->getOobSampleIDs()[sample_idx];
@@ -690,7 +690,7 @@
                  }
          }
          
-         Rcpp::Rcout << "After retrieving data" << std::endl;        // Debug Line
+         // Rcpp::Rcout << "After retrieving data" << std::endl;        // Debug Line
          // TODO: update Prediction
          // TODO: Allocate memory for prediction & Update the definition in Forest.h
          // TODO: should we consider filling the  matrix with missing
@@ -713,7 +713,7 @@
                  }
          }
          
-         Rcpp::Rcout << "After Updating Prediction matrix " << std::endl;        // Debug Line
+         // Rcpp::Rcout << "After Updating Prediction matrix " << std::endl;        // Debug Line
          
          
          
@@ -767,7 +767,7 @@
          
          
          
-         *verbose_out << "In predict Internal" << std::endl;               //Debug line
+         // *verbose_out << "In predict Internal" << std::endl;               //Debug line
          size_t q = data->get_y_cols();
          
          rowvec outcome_1(q, fill::zeros);
@@ -776,7 +776,7 @@
          size_t size_2 = 0;
          
          
-         *verbose_out << "After Initialization" << std::endl;               //Debug line
+         // *verbose_out << "After Initialization" << std::endl;               //Debug line
          for (size_t tree_idx = 0; tree_idx < num_trees; ++tree_idx) {
                  Node* tmp_node = getTreePrediction(tree_idx, sample_idx);
                  
@@ -790,7 +790,7 @@
                  size_2 += tmp_node->get_n2();
                  
          }
-         *verbose_out << "Getting All tree results" << std::endl;               //Debug line
+         // *verbose_out << "Getting All tree results" << std::endl;               //Debug line
          
          // Update Prediction with diff of the weighted average
          // try //Debug line
@@ -800,7 +800,7 @@
          // catch(...){ //Debug line
                  // throw std::runtime_error("Error's in Updating prediction.row"); //Debug line
          // } //Debug line
-         *verbose_out << "Update Prediction" << std::endl;               //Debug line
+         // *verbose_out << "Update Prediction" << std::endl;               //Debug line
  }
  
  void Forest::predictInternalInThread(uint thread_idx) {

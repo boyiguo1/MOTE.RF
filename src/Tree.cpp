@@ -99,7 +99,7 @@
  }
  
  void Tree::grow(vec* variable_importance) {
-         Rcpp::Rcout << "Start tree::grow" << std::endl;        // Debug Line
+         // Rcpp::Rcout << "Start tree::grow" << std::endl;        // Debug Line
 
          // Allocate memory for tree growing
          // TODO: figure out what to do with this
@@ -175,7 +175,7 @@
          // sampleIDs.shrink_to_fit();
          // cleanUpInternal();
          
-         Rcpp::Rcout << "End growing tree" << std::endl;        // Debug Line
+         // Rcpp::Rcout << "End growing tree" << std::endl;        // Debug Line
  }
  
 
@@ -553,7 +553,7 @@
          // Rcpp::Rcout << "trt2 bound[2]: "<< treat2_bnd[1] << std::endl;        // Debug Line     
          
          if(std::max(treat1_bnd(0), treat2_bnd(0)) > std::min(treat1_bnd(1), treat2_bnd(1))){
-            Rcpp::Rcout << "Terminal Node: LB > UB" << std::endl;        // Debug Line    
+            // Rcpp::Rcout << "Terminal Node: LB > UB" << std::endl;        // Debug Line    
             return true;
          }
 
@@ -565,7 +565,7 @@
          );
          
          if(split_can.n_elem < 2){
-                 Rcpp::Rcout << "Terminal Node: Not Enough Split_candidate" << std::endl;        // Debug Line    
+                 // Rcpp::Rcout << "Terminal Node: Not Enough Split_candidate" << std::endl;        // Debug Line    
                  return true;
          }
          
@@ -591,7 +591,7 @@
          
          // Stop if no good split found
          if (best_decrease < 0) {
-                 Rcpp::Rcout << "Terminal Node: Not decrease in variance reduction" << std::endl;        // Debug Line    
+                 // Rcpp::Rcout << "Terminal Node: Not decrease in variance reduction" << std::endl;        // Debug Line    
                  return true;
          }
          
