@@ -418,6 +418,7 @@ MOTE <- function(#formula = NULL, data = NULL,
     result$num.samples <- nrow(x.b.new)
   # }
   result$replace <- replace
+  result$q <- ncol(y.b)
   
   ## Write forest object
   if (write.forest) {

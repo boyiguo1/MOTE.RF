@@ -54,6 +54,7 @@
                  prediction_mode, sample_with_replacement, 
                  predict_all, sample_fraction,  minprop, holdout,  num_random_splits, max_depth);
          
+         *verbose_out << "Finish Forest::init .." << std::endl;          //Debug line
          
          // Set case weights
          // if (!case_weights.empty()) {
@@ -129,9 +130,9 @@
          num_samples = data->getNumRows();
          num_independent_variables = data->getNumCols();
          
-         
-         initInternal();
-         
+         *verbose_out << "Forest::init Internal.." << std::endl;          //Debug line
+         if(!prediction_mode) initInternal();
+         *verbose_out << "Finish Forest::initInternal .." << std::endl;          //Debug line
          
          // Init manual inbag
          manual_inbag.push_back(std::vector<size_t>());
@@ -256,6 +257,8 @@
          this->num_trees = num_trees;
          // data->setIsOrderedVariable(is_ordered_variable);    // TODO Delete
          
+         *verbose_out << "Loading Forest .." << std::endl;          //Debug line
+         
          // Create trees
          trees.reserve(num_trees);
          for (size_t i = 0; i < num_trees; ++i) {
@@ -265,6 +268,8 @@
                          )
                  );
          }
+         
+         *verbose_out << "Finish Loading Forest .." << std::endl;          //Debug line
          
          // Create thread ranges
          equalSplit(thread_ranges, 0, num_trees - 1, num_threads);
@@ -276,6 +281,7 @@
                  if (verbose && verbose_out) {
                          *verbose_out << "Predicting .." << std::endl;
                  }
+                 *verbose_out << "Predicting .." << std::endl;  // Debug line
                  // TODO: implement predict function
                  predict();
          } else {
@@ -293,6 +299,8 @@
                          computePredictionError();
                  }
                  
+                 
+                 *verbose_out << "After computing OOB error" << std::endl; //Debug line
                  // unneccssary files
                  // TODO: Delete this part
                  // if (importance_mode == IMP_PERM_BREIMAN || importance_mode == IMP_PERM_LIAW || importance_mode == IMP_PERM_RAW
@@ -427,6 +435,8 @@
  
  void Forest::predict() {
          
+         *verbose_out << "In Forest::predict" << std::endl;               //Debug line
+         
          // Predict trees in multiple threads and join the threads with the main thread
 #ifdef OLD_WIN_R_BUILD
          // #nocov start
@@ -462,6 +472,9 @@
          for (auto &thread : threads) {
                  thread.join();
          }
+         
+         
+         *verbose_out << "Congrugating results" << std::endl;               //Debug line
          
          // Aggregate predictions
          allocatePredictMemory();
@@ -700,6 +713,8 @@
                  }
          }
          
+         Rcpp::Rcout << "After Updating Prediction matrix " << std::endl;        // Debug Line
+         
          
          
  }
@@ -752,7 +767,7 @@
          
          
          
-         
+         *verbose_out << "In predict Internal" << std::endl;               //Debug line
          size_t q = data->get_y_cols();
          
          rowvec outcome_1(q, fill::zeros);
@@ -760,19 +775,32 @@
          size_t size_1 = 0;
          size_t size_2 = 0;
          
+         
+         *verbose_out << "After Initialization" << std::endl;               //Debug line
          for (size_t tree_idx = 0; tree_idx < num_trees; ++tree_idx) {
                  Node* tmp_node = getTreePrediction(tree_idx, sample_idx);
                  
-                 outcome_1 += tmp_node -> get_outcome1();
-                 outcome_2 += tmp_node -> get_outcome2();
+                 // *verbose_out << "Node: Outcome_1"<<  tmp_node -> get_outcome1() << std::endl;               //Debug line
+                 // *verbose_out << "Node: Outcome_2"<<  tmp_node -> get_outcome2() << std::endl;
+                 // *verbose_out << "Node: n_1"<<  tmp_node->get_n1() << std::endl;               //Debug line
+                 // *verbose_out << "Node: n_2"<<  tmp_node->get_n2() << std::endl;                 
+                 outcome_1 = outcome_1 + tmp_node -> get_outcome1();
+                 outcome_2 = outcome_2 + tmp_node -> get_outcome2();
                  size_1 += tmp_node->get_n1();
                  size_2 += tmp_node->get_n2();
                  
          }
+         *verbose_out << "Getting All tree results" << std::endl;               //Debug line
          
          // Update Prediction with diff of the weighted average
+         // try //Debug line
+         // { //Debug line
          predictions.row(sample_idx) = rowvec((outcome_2/size_2) - (outcome_1/size_1));
-         
+         // } //Debug line
+         // catch(...){ //Debug line
+                 // throw std::runtime_error("Error's in Updating prediction.row"); //Debug line
+         // } //Debug line
+         *verbose_out << "Update Prediction" << std::endl;               //Debug line
  }
  
  void Forest::predictInternalInThread(uint thread_idx) {

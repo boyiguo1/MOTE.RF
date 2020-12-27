@@ -67,7 +67,7 @@ predict.MOTE.forest <- function(object, data, predict.all = FALSE,
                                   num.trees = object$num.trees, 
                                 seed = NULL, num.threads = NULL, 
                                   # type = "response", se.method = "infjack",
-                                  verbose = TRUE, inbag.counts = NULL, ...) {
+                                  verbose = TRUE, inbag.counts = NULL, q, ...) {
   
   # TODO: Delete this
   # ## GenABEL GWA data
@@ -222,7 +222,8 @@ predict.MOTE.forest <- function(object, data, predict.all = FALSE,
   max.depth <- 0
   inbag <- list(c(0,0))
   use.inbag <- FALSE
-  y <- x_diff <- matrix(c(0, 0))
+  x_diff <- matrix(c(0, 0))
+  y <- matrix(0, ncol = q, nrow = 1)
   treat <- c(1,-1)
 
   
@@ -237,6 +238,7 @@ predict.MOTE.forest <- function(object, data, predict.all = FALSE,
     x <- data.matrix(x)
   # }
   
+  cat("Prepare to run MOTECpp in prediction")
   ## Call Ranger
   result <- MOTECpp(  x, x_diff, 
                       y, treat, forest$independent.variable.names, 
@@ -521,11 +523,17 @@ predict.MOTE <- function(object, data = NULL, predict.all = FALSE,
   #   
   #   result
   # } else {
+  
+  
+  break.pt <- 1
+  
+  break.pt2 <- 1
+  
     ## Non-quantile prediction
     if (is.null(data)) {
       stop("Error: Argument 'data' is required for non-quantile prediction.") 
     }
-    predict(object = forest, data = data, predict.all = predict.all, num.trees = num.trees, #type, se.method,
-            seed = seed, num.threads = num.threads, verbose = verbose, inbag.counts = object$inbag.counts, ...)
+    predict(forest, data = data, predict.all = predict.all, num.trees = num.trees, #type, se.method,
+            seed = seed, num.threads = num.threads, verbose = verbose, inbag.counts = object$inbag.counts, q = object$q, ...)
   # }
 }
