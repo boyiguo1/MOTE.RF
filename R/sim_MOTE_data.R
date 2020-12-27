@@ -116,6 +116,12 @@ sim_MOTE_data <- function(
   Y.test.trt1.end <- .link.f(X.test.trt1.end)
   Y.test.trt2.end <- .link.f(X.test.trt2.end)
   
+  
+  colnames(X.train.base) <- colnames(X.train.end) <- colnames(X.test.base) <- paste0("Var", 1:p)
+  
+  colnames(Y.train.base) <- colnames(Y.train.end) <- colnames(Y.test.trt1.end) <-
+    colnames(Y.test.trt2.end) <- paste0("Resp", 1:q)
+  
   # TODO: add return list
   return(
     list(
