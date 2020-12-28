@@ -99,7 +99,7 @@
  }
  
  void Tree::grow(vec* variable_importance) {
-         Rcpp::Rcout << "Start tree::grow" << std::endl;        // Debug Line
+         // Rcpp::Rcout << "Start tree::grow" << std::endl;        // Debug Line
 
          // Allocate memory for tree growing
          // TODO: figure out what to do with this
@@ -275,22 +275,31 @@
          
          size_t n_outcome1 = idx_1.n_elem;
          size_t n_outcome2 = idx_2.n_elem;
+         
+         rowvec sum_outcome1;
+         rowvec sum_outcome2;
+         
+         size_t q = data->get_y_cols();
+         
          // Rcpp::Rcout << "After Calculate outcome SIze" << std::endl;        // Debug Line
-         rowvec sum_outcome1 = colSums(data->get_y_diff_rows(as<uvec>(indices[as<NumericVector>(wrap(idx_1))])));
+         if(n_outcome1 == 0) sum_outcome1 = rowvec( q, fill::zeros);
+         else sum_outcome1 = colSums(data->get_y_diff_rows(as<uvec>(indices[as<NumericVector>(wrap(idx_1))])));
          // Rcpp::Rcout << "After Calculate Average SIze for outcome 1" << std::endl;        // Debug Line
          // Rcpp::Rcout << idx_2 << std::endl;        // Debug Line
-         rowvec sum_outcome2 = colSums(data->get_y_diff_rows(as<uvec>(indices[as<NumericVector>(wrap(idx_2))])));
+         if(n_outcome2 == 0) sum_outcome2 = rowvec( q, fill::zeros);
+         else sum_outcome2 = colSums(data->get_y_diff_rows(as<uvec>(indices[as<NumericVector>(wrap(idx_2))])));
 
          
          // Rcpp::Rcout << "Summairze Outcomes" << std::endl;        // Debug Line
          // Stop if maximum node size or depth reached
-         if (num_samples_node <= min_node_size || (nodeID >= last_left_nodeID && max_depth > 0 && depth >= max_depth)) {
+         if (n_outcome2 == 0 || n_outcome1 == 0|| num_samples_node <= min_node_size || (nodeID >= last_left_nodeID && max_depth > 0 && depth >= max_depth)) {
                  
                  // child_nodes[nodeID]->set_leaf(true);
                  child_nodes[nodeID]->set_n(n_outcome1, n_outcome2);
                  child_nodes[nodeID]->set_sum(sum_outcome1, sum_outcome2);
                  return true;
          }
+            
          
          // Rcpp::Rcout << "Before Find Best Split" << std::endl;        // Debug Line
          // TODO: debug findBestSplit(nodeID) function
@@ -511,20 +520,22 @@
          // mat cca_res = cancor(join_vert(left_mat , right_mat),
          //                      join_vert(right_mat, left_mat));
          mat cca_res = cancor(left, right);         // Debug Line  
-         // Rcpp::Rcout << "After CCA" << std::endl;        // Debug Line         
+         // Rcpp::Rcout << "After CCA" << std::endl;        // Debug Line
          // if degenerate solution, stop
          if(std::min(cca_res.n_cols, cca_res.n_rows) < (2*p+q)){
                  // Rcpp::Rcout << "CCA_res columns" << cca_res.n_cols << std::endl;        // Debug Line              
                  // Rcpp::Rcout << "CCA_res rows" << cca_res.n_rows << std::endl;        // Debug Line                 
-                 // Rcpp::Rcout << "Terminal Node: Degernated CCA" << std::endl;        // Debug Line    
+                 // Rcpp::Rcout << "Terminal Node: Degernated CCA" << std::endl;        // Debug Line
                  return true;
          }
          
 
          
          // Extract CCA coef for X_b and y_diff
+         // Rcpp::Rcout << "Before extracting coef" << std::endl;        // Debug Line
          vec coef_x = (cca_res.col(0)).subvec(0, p-1);
          vec coef_y = (cca_res.col(0)).subvec(2*p, 2*p+q-1);
+         // Rcpp::Rcout << "After extracting coef" << std::endl;        // Debug Line
          // Calculate projections
          vec proj_x = x_b_centered * coef_x;
          vec proj_y = T_Delta_Y * coef_y;
@@ -544,9 +555,9 @@
          // Rcpp::Rcout << "bound Quantile: "<< bnd_quantile << std::endl;        // Debug Line     
          
          vec treat1_bnd = quantile(split_can_1, bnd_quantile);
-         // Rcpp::Rcout << "trt1 bound: "<< treat1_bnd << std::endl;        // Debug Line 
+         // Rcpp::Rcout << "trt1 bound: "<< treat1_bnd << std::endl;        // Debug Line
          vec treat2_bnd = quantile(split_can_2, bnd_quantile);
-         // Rcpp::Rcout << "trt2 bound: "<< treat2_bnd << std::endl;        // Debug Line 
+         // Rcpp::Rcout << "trt2 bound: "<< treat2_bnd << std::endl;        // Debug Line
          // Rcpp::Rcout << "trt1 bound[1]: "<< treat1_bnd[0] << std::endl;        // Debug Line 
          // Rcpp::Rcout << "trt1 bound[2]: "<< treat1_bnd[1] << std::endl;        // Debug Line 
          // Rcpp::Rcout << "trt2 bound[1]: "<< treat2_bnd[0] << std::endl;        // Debug Line 
@@ -569,12 +580,12 @@
                  return true;
          }
          
-         // Rcpp::Rcout << "# of Qualified Split_can: "<< split_can.n_elem << std::endl;        // Debug Line    
+         // Rcpp::Rcout << "# of Qualified Split_can: "<< split_can.n_elem << std::endl;        // Debug Line
          // Rcpp::Rcout << "Qualified Split_can: "<< split_can << std::endl;        // Debug Line 
          // Limit number of splits
          vec split_can_final = split_can.elem(randperm(split_can.n_elem, std::min(num_random_splits, split_can.n_elem)));
   
-          // Rcpp::Rcout << "# of Randpom Split_can: "<< split_can_final.n_elem << std::endl;        // Debug Line          
+          // Rcpp::Rcout << "# of Randpom Split_can: "<< split_can_final.n_elem << std::endl;        // Debug Line
          
          // Initiate variables for the final split results
          double best_decrease = -1;
@@ -587,6 +598,8 @@
                             proj_x, proj_y, split_can_final,
                             best_value, best_decrease);
          
+         // Rcpp::Rcout << "After findBestSplitValue"<< std::endl;        // Debug Line
+         
          
          
          // Stop if no good split found
@@ -595,7 +608,8 @@
                  return true;
          }
          
-         // Rcpp::Rcout << "Best Value" << std::endl; 
+         // Rcpp::Rcout << "Best Value" << std::endl; // Debug Line
+         
          
          // 
          // Save best values
