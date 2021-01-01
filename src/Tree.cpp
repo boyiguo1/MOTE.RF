@@ -227,7 +227,7 @@
          indices.push_back(sampleIDs[pos]);
      }
      
-     if(indices.length()<1) std::runtime_error("Empty Indices");
+     if(indices.length()<1) std::runtime_error("Empty Indices");                // Debug Line
      
      // NOTE: idx_1, and idx_2 are the index of the IntegerVector indices,
      //       instead of the index in the original dataset.
@@ -238,30 +238,29 @@
      
      size_t n_outcome1 = idx_1.n_elem;
      size_t n_outcome2 = idx_2.n_elem;
-     
-     uvec data_idx_1 = as<uvec>(indices[as<NumericVector>(wrap(idx_1))]);
-     uvec data_idx_2 = as<uvec>(indices[as<NumericVector>(wrap(idx_2))]);
-    
-     // TODO: added debug line
-     uvec tmp1 = unique(data_idx_1);
-     uvec tmp2 = unique(data_idx_2);    
-     
-     // TODO: added debug line
-     size_t n_1_unique = tmp1.n_elem;      
-     size_t n_2_unique = tmp2.n_elem;
-     
-     rowvec sum_outcome1;
-     rowvec sum_outcome2;
+     size_t n_1_unique = 0;      
+     size_t n_2_unique = 0;
      
      size_t q = data->get_y_cols();
      size_t p = data->getNumCols();
      
-     if(n_outcome1 == 0) sum_outcome1 = rowvec( q, fill::zeros);
-     else sum_outcome1 = colSums(data->get_y_diff_rows(data_idx_1));
-     if(n_outcome2 == 0) sum_outcome2 = rowvec( q, fill::zeros);
-     else sum_outcome2 = colSums(data->get_y_diff_rows(data_idx_2));
+     rowvec sum_outcome1 = rowvec( q, fill::zeros);
+     rowvec sum_outcome2 = rowvec( q, fill::zeros);
      
-     
+     //TODO: to remove later
+     if(n_outcome1!=0){
+         uvec data_idx_1 = as<uvec>(indices[as<NumericVector>(wrap(idx_1))]);
+         uvec tmp1 = unique(data_idx_1);
+         n_1_unique = tmp1.n_elem;
+         sum_outcome1 = colSums(data->get_y_diff_rows(data_idx_1));
+     }
+         
+     if(n_outcome2!=0){                                       
+         uvec data_idx_2 = as<uvec>(indices[as<NumericVector>(wrap(idx_2))]);
+         uvec tmp2 = unique(data_idx_2); 
+         n_2_unique = tmp2.n_elem;
+         colSums(data->get_y_diff_rows(data_idx_2));
+     }
     
     /*-----------------------------------------------------------------------
         Base Cases
