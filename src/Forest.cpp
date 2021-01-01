@@ -349,7 +349,8 @@
                                 // &case_weights,
                                 &sampleIDs_per_class,
                                 tree_manual_inbag, keep_inbag,
-                                &sample_fraction, minprop, holdout, num_random_splits, max_depth);
+                                &sample_fraction, minprop, //holdout,
+                                num_random_splits, max_depth);
          }
          
          // *verbose_out << "Finish Initialize "<< num_trees<<" Trees in Grow" << std::endl;               //Debug line
