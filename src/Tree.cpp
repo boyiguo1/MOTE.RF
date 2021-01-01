@@ -523,16 +523,14 @@
      
      vec split_can_final = split_can.elem(randperm(split_can.n_elem, std::min(num_random_splits, split_can.n_elem)));
      
-     // Rcpp::Rcout << "# of Randpom Split_can: "<< split_can_final.n_elem << std::endl;        // Debug Line
      
      // Initiate variables for the final split results
      double best_decrease = -1;
-     // vec best_coefs(ncol_x_b);
      double best_value = 0;
      rowvec x_b_center = mean(x_b,0);
      
      // TODO: calculate the variance reduction & Choose the best split
-     findBestSplitValue(nodeID, //varID, sum_node, num_samples_node,
+     findBestSplitValue(nodeID, 
                         proj_x, proj_y, split_can_final,
                         best_value, best_decrease);
      
@@ -551,20 +549,8 @@
      
      // 
      // Save best values
-     // split_varIDs[nodeID] = best_varID;
-     // split_values[nodeID] = best_value;
-     // child_nodes[nodeID]->set_coef(best_coefs);
      child_nodes[nodeID]->set_coef(coef_x);
-     // child_nodes[nodeID]->set_center(x_b_center);
      child_nodes[nodeID]->set_value(best_value + dot(x_b_center, coef_x));
-     // child_nodes[nodeID]->set_leaf(false);
-     
-     // Rcpp::Rcout << "Best Coef is " << coef_x << std::endl;  // debug line
-     // Rcpp::Rcout << "x_b_center is " << x_b_center << std::endl;  // debug line  
-     // Rcpp::Rcout << "dot prod is " << dot(x_b_center, coef_x) << std::endl;  // debug line  
-     
-     // Rcpp::Rcout << "Best Split is " << best_value << std::endl;  // debug line
-     // Rcpp::Rcout << "Best Split after is " << best_value + dot(x_b_center, coef_x) << std::endl; // debug line
      
      // uvec L_indices_proj = find(proj_x < best_value); // debug line
      // uvec R_indices_proj = find(proj_x >= best_value);// debug line
@@ -577,27 +563,18 @@
      // Rcpp::Rcout << "[add center] # of Right Child is " << R_indices.n_elem << std::endl; // debug line
      
      
-     // throw std::runtime_error("Finished calculating Best Splits");          // debug line
      
-     // 
-     // Compute Varaible Importance
-     // addImportance(nodeID, coef_x);  // TO Delete
-     // Rcpp::Rcout <<  "Sample Size" << child_nodes[nodeID]->get_samplesize() << std::endl; // Debug Line
-     // Rcpp::Rcout << coef_x << std::endl; // Debug Line
+     // Compute Variable Importance
      vec incrmt  = n * coef_x;
-     // Rcpp::Rcout << "incrmt:" << incrmt << std::endl; // Debug Line
      (*variable_importance) += incrmt;
-     // Rcpp::Rcout << "variable_importance:" << *variable_importance << std::endl; // Debug Line
      
      return false;
  }
  
  // TODO: Debug this function
- void Tree::findBestSplitValue(size_t nodeID, // size_t varID, size_t num_classes,
-                               // const std::vector<size_t>& class_counts, 
-                               // size_t num_samples_node, 
+ void Tree::findBestSplitValue(size_t nodeID,
                                const vec& proj_x, const vec& proj_y, const vec& split_can_final,
-                               double& best_value, //rowvec& best_coefs,
+                               double& best_value,
                                double& best_decrease) {
      
      
@@ -612,13 +589,14 @@
          size_t L_length = L_indices.n_elem;
          size_t R_length = R_indices.n_elem;
          
+         double decrease = -1;
          // calculate impurity
-         double decrease = (L_length-1)*var(proj_y.elem(L_indices)) + (R_length-1)*var(proj_y.elem(R_indices));
+         if(L_length > 1 && R_length >1)
+            decrease = (L_length-1)*var(proj_y.elem(L_indices)) + (R_length-1)*var(proj_y.elem(R_indices));
          
          // Check with best
          // If better than before, use this
          if (decrease > best_decrease) {
-             
              best_value = split_can_final[i];
              best_decrease = decrease;
          }
