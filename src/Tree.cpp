@@ -165,7 +165,6 @@
      /*-----------------------------------------------------------------------
         Create Child Nodes
      #-----------------------------------------------------------------------*/
-     // Create child nodes
      size_t left_child_nodeID = child_nodes.size();
      child_nodeIDs[0][nodeID] = left_child_nodeID;
      createEmptyNode();
@@ -181,7 +180,6 @@
      /*-----------------------------------------------------------------------
         Sort Sample ID
      #-----------------------------------------------------------------------*/
-     
      double split_value = child_nodes[nodeID]->get_value();
      vec tmp_coef = child_nodes[nodeID]-> get_coefs();
      
@@ -229,12 +227,26 @@
          indices.push_back(sampleIDs[pos]);
      }
      
+     // NOTE: idx_1, and idx_2 are the index of the IntegerVector indices,
+     //       instead of the index in the original dataset.
+     //       See example below when calculating sum
      vec tmp_trt = data->get_trt(as<uvec>(indices));
      uvec idx_1 = find(tmp_trt==1);
      uvec idx_2 = find(tmp_trt==-1);
      
      size_t n_outcome1 = idx_1.n_elem;
      size_t n_outcome2 = idx_2.n_elem;
+     
+     uvec data_idx_1 = as<uvec>(indices[as<NumericVector>(wrap(idx_1))]);
+     uvec data_idx_2 = as<uvec>(indices[as<NumericVector>(wrap(idx_2))]);
+    
+     // TODO: added debug line
+     uvec tmp1 = unique(data_idx_1);
+     uvec tmp2 = unique(data_idx_2);    
+     
+     // TODO: added debug line
+     size_t n_1_unique = tmp1.n_elem;      
+     size_t n_2_unique = tmp2.n_elem;
      
      rowvec sum_outcome1;
      rowvec sum_outcome2;
@@ -243,16 +255,18 @@
      size_t p = data->getNumCols();
      
      if(n_outcome1 == 0) sum_outcome1 = rowvec( q, fill::zeros);
-     else sum_outcome1 = colSums(data->get_y_diff_rows(as<uvec>(indices[as<NumericVector>(wrap(idx_1))])));
+     else sum_outcome1 = colSums(data->get_y_diff_rows(data_idx_1));
      if(n_outcome2 == 0) sum_outcome2 = rowvec( q, fill::zeros);
-     else sum_outcome2 = colSums(data->get_y_diff_rows(as<uvec>(indices[as<NumericVector>(wrap(idx_2))])));
+     else sum_outcome2 = colSums(data->get_y_diff_rows(data_idx_2));
      
      
     
     /*-----------------------------------------------------------------------
         Base Cases
     #-----------------------------------------------------------------------*/
-     if ( std::min(n_outcome1, n_outcome2) <= std::max(p, q) || // Stop if sample size too small for CCA
+     if ( 
+         std::min(n_1_unique, n_2_unique) <= std::max(p, q) || // TODO: added debug line
+         std::min(n_outcome1, n_outcome2) <= std::max(p, q) || // Stop if sample size too small for CCA
          n_outcome2 == 0 || n_outcome1 == 0 ||       // Stop if no Samples in any Treatment Arm
          num_samples_node <= min_node_size ||       // Stop if maximum node size or depth reached
          (nodeID >= last_left_nodeID && max_depth > 0 && depth >= max_depth) // Stop if  depth reached
@@ -382,8 +396,9 @@
  
  bool Tree::findBestSplit(size_t nodeID) {
      
-     
-     // Retrieve Data
+     /*-----------------------------------------------------------------------
+        Fetching Data
+     #-----------------------------------------------------------------------*/
      // NOTE: This is repetitive of in SplitNodeInternal
      IntegerVector indices;
      for (size_t pos = start_pos[nodeID]; pos < end_pos[nodeID]; ++pos) {
@@ -393,56 +408,58 @@
      uvec idx_1 = find(tmp_trt==1);
      uvec idx_2 = find(tmp_trt==-1);
      
-     
-     // Retrieve X_b
+     // Retrieve Matrices
      mat x_b = data->get_x_b_rows(as<uvec>(indices));
      mat x_diff = data->get_x_diff_rows(as<uvec>(indices));
      mat y_diff = data->get_y_diff_rows(as<uvec>(indices));
-     
      
      size_t p = x_b.n_cols;
      size_t q = y_diff.n_cols;
      size_t n = x_b.n_rows;
      
-     // Centering
+     /*-----------------------------------------------------------------------
+        Prepare Data:
+            * Calculate Modified Outcomes
+            * Centering Matrix
+     #-----------------------------------------------------------------------*/
      mat x_b_centered = center(x_b); // center X_b
      mat T_Delta_X = center(times(x_diff,tmp_trt)); // center T_Delta_X
      mat T_Delta_Y = center(times(y_diff,tmp_trt)); // center T_Delta_Y
      
-     // Rcpp::Rcout << "Before Matrix Augmentation" << std::endl;        // Debug Line
      
-     // Create concatenated matrix
+     /*-----------------------------------------------------------------------
+        Matrix Augmentation
+     #-----------------------------------------------------------------------*/
      mat left_mat = join_vert(
-         // join_vert(
          join_horiz(x_b_centered, mat(n, p+q, fill::zeros)), // cbind(.x.b,matrix(0,nrow=n,ncol=p+q))
-         join_horiz(x_b_centered, mat(n, p+q, fill::zeros)) // cbind(.x.b,matrix(0,nrow=n,ncol=p+q))
-         // )
-         ,
-         join_horiz( // cbind(matrix(0,nrow=n,ncol=p),T.delta.x, matrix(0,nrow=n,ncol=q))
+         join_horiz(x_b_centered, mat(n, p+q, fill::zeros)), // cbind(.x.b,matrix(0,nrow=n,ncol=p+q))
+         join_horiz(                                         // cbind(matrix(0,nrow=n,ncol=p),T.delta.x, matrix(0,nrow=n,ncol=q))
              join_horiz(mat(n, p, fill::zeros),
                         T_Delta_X),
                         mat(n, q, fill::zeros)
          )
      );
+     
      mat right_mat = join_vert(
          join_vert(
-             join_horiz(mat(n, 2*p, fill::zeros), T_Delta_Y), //  cbind(matrix(0,nrow=n,ncol=2*p),T.delta.y)
-             join_horiz( // cbind(matrix(0,nrow=n,ncol=p),T.delta.x, matrix(0,nrow=n,ncol=q))
-                 join_horiz(mat(n, p, fill::zeros),
-                            T_Delta_X),
-                            mat(n, q, fill::zeros)
-             ) 
+             join_horiz(mat(n, 2*p, fill::zeros), T_Delta_Y), // cbind(matrix(0,nrow=n,ncol=2*p),T.delta.y)
+             join_horiz(                                      // cbind(matrix(0,nrow=n,ncol=p),T.delta.x, matrix(0,nrow=n,ncol=q))
+                 join_horiz(
+                     mat(n, p, fill::zeros),
+                     T_Delta_X
+                 ),
+                 mat(n, q, fill::zeros)
+             )
          ),
-         join_horiz(mat(n, 2*p, fill::zeros), T_Delta_Y)//  cbind(matrix(0,nrow=n,ncol=2*p),T.delta.y)
+         join_horiz(mat(n, 2*p, fill::zeros), T_Delta_Y)     // cbind(matrix(0,nrow=n,ncol=2*p),T.delta.y)
      );
-     // Rcpp::Rcout << "After Matrix Augmentation" << std::endl;        // Debug Line
      
+     // Error Prevention: Consistent Matrices Dimensions
      if((left_mat.n_cols!=right_mat.n_cols)|(left_mat.n_rows!=right_mat.n_rows)|(left_mat.n_rows!=3*n)){
-         Rcpp::Rcout << "left_mat columns" << left_mat.n_cols << std::endl;        // Debug Line              
-         Rcpp::Rcout << "left_mat rows" << left_mat.n_rows << std::endl;        // Debug Line 
-         
-         Rcpp::Rcout << "right_mat columns" << right_mat.n_cols << std::endl;        // Debug Line              
-         Rcpp::Rcout << "right_mat rows" << right_mat.n_rows << std::endl;        // Debug Line 
+         Rcpp::Rcout << "left_mat columns" << left_mat.n_cols << std::endl;         // Debug Line              
+         Rcpp::Rcout << "left_mat rows" << left_mat.n_rows << std::endl;            // Debug Line 
+         Rcpp::Rcout << "right_mat columns" << right_mat.n_cols << std::endl;       // Debug Line              
+         Rcpp::Rcout << "right_mat rows" << right_mat.n_rows << std::endl;          // Debug Line 
          
          throw std::runtime_error("Inconsistent Dimension in Matrix Augmentation");
      }
@@ -451,47 +468,36 @@
      mat left = join_vert(left_mat , right_mat);
      mat right = join_vert(right_mat, left_mat);
      
-     // Run CCA
-     // mat cca_res = cancor(join_vert(left_mat , right_mat),
-     //                      join_vert(right_mat, left_mat));
-     mat cca_res = cancor(left, right);         // Debug Line  
-     // Rcpp::Rcout << "After CCA" << std::endl;        // Debug Line
-     // if degenerate solution, stop
-     if(std::min(cca_res.n_cols, cca_res.n_rows) < (2*p+q)){
+     /*-----------------------------------------------------------------------
+        CCA Step
+     #-----------------------------------------------------------------------*/
+     // TODO: find a C++ implementation of CCA, such that parallel computing is possible
+     mat cca_res = cancor(left, right); 
+     
+     // Base case: degenerated CCA solution
+     if(std::min(cca_res.n_cols, cca_res.n_rows) < (2*p+q)){    
          // Rcpp::Rcout << "CCA_res columns" << cca_res.n_cols << std::endl;        // Debug Line              
          // Rcpp::Rcout << "CCA_res rows" << cca_res.n_rows << std::endl;        // Debug Line                 
          // Rcpp::Rcout << "Terminal Node: Degernated CCA" << std::endl;        // Debug Line
          return true;
      }
      
-     
-     
      // Extract CCA coef for X_b and y_diff
-     // Rcpp::Rcout << "Before extracting coef" << std::endl;        // Debug Line
      vec coef_x = (cca_res.col(0)).subvec(0, p-1);
      vec coef_y = (cca_res.col(0)).subvec(2*p, 2*p+q-1);
-     // Rcpp::Rcout << "After extracting coef" << std::endl;        // Debug Line
+
      // Calculate projections
      vec proj_x = x_b_centered * coef_x;
      vec proj_y = T_Delta_Y * coef_y;
      
-     vec tmp_proj = (unique(proj_x));       // Debug Line
-     // Rcpp::Rcout << "# of Unique Proj Values: " << tmp_proj.n_elem << std::endl;        // Debug Line
-     
-     // TODO: extract this part to a function
      // Find Possible Splits
-     // vec split_can_1 = unique(proj_x.elem(as<uvec>(indices[as<NumericVector>(wrap(idx_1))])));
-     vec split_can_1 = unique(proj_x.elem(idx_1));                                                  // Debug Line
-     // Rcpp::Rcout << "# of Unique Proj Values for trt 1: " << split_can_1.n_elem << std::endl;        // Debug Line
-     // vec split_can_2 = unique(proj_x.elem(as<uvec>(indices[as<NumericVector>(wrap(idx_2))])));
-     vec split_can_2 = unique(proj_x.elem(idx_2));                                                  // Debug Line    
-     // Rcpp::Rcout << "# of Unique Proj Values for trt 2: " << split_can_2.n_elem << std::endl;        // Debug Line
+     vec split_can_1 = proj_x.elem(idx_1);
+     vec split_can_2 = proj_x.elem(idx_2);    
      vec bnd_quantile = {minprop, 1-minprop};
-     // Rcpp::Rcout << "bound Quantile: "<< bnd_quantile << std::endl;        // Debug Line     
      
      vec treat1_bnd = quantile(split_can_1, bnd_quantile);
-     // Rcpp::Rcout << "trt1 bound: "<< treat1_bnd << std::endl;        // Debug Line
      vec treat2_bnd = quantile(split_can_2, bnd_quantile);
+     // Rcpp::Rcout << "trt1 bound: "<< treat1_bnd << std::endl;        // Debug Line
      // Rcpp::Rcout << "trt2 bound: "<< treat2_bnd << std::endl;        // Debug Line
      // Rcpp::Rcout << "trt1 bound[1]: "<< treat1_bnd[0] << std::endl;        // Debug Line 
      // Rcpp::Rcout << "trt1 bound[2]: "<< treat1_bnd[1] << std::endl;        // Debug Line 
@@ -510,14 +516,11 @@
          )
      );
      
-     if(split_can.n_elem < 2){
+     if(split_can.n_elem < 1){
          // Rcpp::Rcout << "Terminal Node: Not Enough Split_candidate" << std::endl;        // Debug Line    
          return true;
      }
      
-     // Rcpp::Rcout << "# of Qualified Split_can: "<< split_can.n_elem << std::endl;        // Debug Line
-     // Rcpp::Rcout << "Qualified Split_can: "<< split_can << std::endl;        // Debug Line 
-     // Limit number of splits
      vec split_can_final = split_can.elem(randperm(split_can.n_elem, std::min(num_random_splits, split_can.n_elem)));
      
      // Rcpp::Rcout << "# of Randpom Split_can: "<< split_can_final.n_elem << std::endl;        // Debug Line
