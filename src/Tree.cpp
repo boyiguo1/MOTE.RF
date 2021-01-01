@@ -18,7 +18,7 @@
  Tree::Tree() :
  data(0), num_samples(0),  min_node_size(0),
  minprop(DEFAULT_MINPROP), num_random_splits(DEFAULT_NUM_RANDOM_SPLITS), max_depth(DEFAULT_MAXDEPTH),
- keep_inbag(false), manual_inbag(0), sample_with_replacement(true), sample_fraction(0), // memory_saving_splitting(false),
+ keep_inbag(false), manual_inbag(0), sample_with_replacement(true), sample_fraction(0),
  num_samples_oob(0), oob_sampleIDs(0), 
  depth(0), last_left_nodeID(0),
  variable_importance(0) {
@@ -26,16 +26,15 @@
  
  Tree::Tree(std::vector<std::vector<size_t>>& child_nodeIDs, 
             std::vector<Rcpp::List>& child_nodes
-                //std::vector<size_t>& split_varIDs,std::vector<double>& split_values
  ) :
  data(0), num_samples(0), min_node_size(0),
  minprop(DEFAULT_MINPROP), num_random_splits(DEFAULT_NUM_RANDOM_SPLITS), max_depth(DEFAULT_MAXDEPTH),
  keep_inbag(false), manual_inbag(0), sample_with_replacement(true), sample_fraction(0),
- //split_varIDs(split_varIDs), split_values(split_values), 
- num_samples_oob(0),oob_sampleIDs(0), //holdout(false),//memory_saving_splitting(false),
+ num_samples_oob(0),oob_sampleIDs(0), 
  depth(0), child_nodeIDs(child_nodeIDs), last_left_nodeID(0),
  variable_importance(0) {
-     // make List child nodes to Nodes
+     
+     // Convert type List child nodes to Nodes
      size_t tmp_n = child_nodes.size();
      this->child_nodes.reserve(tmp_n);
      for(size_t i = 0; i < tmp_n; ++i){
@@ -52,78 +51,60 @@
                                    as<size_t>((child_nodes[i])["n2"]))
          );
      }
-     
  }
  
- void Tree::init(const Data* data, // uint mtry,
+ void Tree::init(const Data* data, 
                  size_t num_samples, uint seed, uint min_node_size,
-                 bool sample_with_replacement, //bool memory_saving_splitting,
-                 // std::vector<double>* case_weights,
+                 bool sample_with_replacement, 
                  const std::vector<std::vector<size_t>>* sampleIDs_per_class,
                  std::vector<size_t>* manual_inbag, bool keep_inbag,
-                 std::vector<double>* sample_fraction,  double minprop, //bool holdout,
+                 std::vector<double>* sample_fraction,  double minprop, 
                  uint num_random_splits,
                  uint max_depth) {
      
      this->data = data;
-     // this->mtry = mtry;
      this->num_samples = num_samples;
-     this->sampleIDs_per_class = sampleIDs_per_class;;
-     // this->memory_saving_splitting = memory_saving_splitting;
+     this->sampleIDs_per_class = sampleIDs_per_class;
+     this->min_node_size = min_node_size;
+     this->sample_with_replacement = sample_with_replacement;
+     this->manual_inbag = manual_inbag;
+     this->keep_inbag = keep_inbag;
+     this->sample_fraction = sample_fraction;
+     this->minprop = minprop;
+     this->num_random_splits = num_random_splits;
+     this->max_depth = max_depth;
      
-     // Create root node, assign bootstrap sample and oob samples
-     child_nodeIDs.push_back(std::vector<size_t>());
-     child_nodeIDs.push_back(std::vector<size_t>());
+
+     child_nodeIDs.push_back(std::vector<size_t>());    // Vector for left child nodes
+     child_nodeIDs.push_back(std::vector<size_t>());    // Vector for right child nodes
+     // Create root node
      createEmptyNode();
      
      // Initialize random number generator and set seed
      random_number_generator.seed(seed);
-     
-     this->min_node_size = min_node_size;
-     this->sample_with_replacement = sample_with_replacement;
-     // this->case_weights = case_weights;
-     this->manual_inbag = manual_inbag;
-     this->keep_inbag = keep_inbag;
-     this->sample_fraction = sample_fraction;
-     // this->holdout = holdout;
-     this->minprop = minprop;
-     this->num_random_splits = num_random_splits;
-     this->max_depth = max_depth;
  }
  
  void Tree::grow(vec* variable_importance) {
-     // Rcpp::Rcout << "Start tree::grow" << std::endl;        // Debug Line
      
-     // Allocate memory for tree growing
-     // TODO: figure out what to do with this
-     // allocateMemory();           // I don't think this is necessary
+     // Rcpp::Rcout << "Start tree::grow" << std::endl;        // Debug Line
      
      this->variable_importance = variable_importance;
      
-     // Bootstrap, dependent if weighted or not and with or without replacement
-     // NOTE: Could implement in the future
-     // if (!case_weights->empty()) {
-     //         if (sample_with_replacement) {
-     //                 bootstrapWeighted();
-     //         } else {
-     //                 bootstrapWithoutReplacementWeighted();
-     //         }
-     // } 
-     
-     if(sample_fraction->size() !=2) {
-         throw std::runtime_error("sample_fraction must contains only 2 elements");
+     if( sample_fraction->size() != 2) {
+         throw std::runtime_error("sample_fraction could opnly contain 2 elements, one for each treatment arm.");
      }
      
-     
+     /*-----------------------------------------------------------------------
+        Create In-bag samples
+     #-----------------------------------------------------------------------*/
+     // TODO: need to test setManualInbag(), bootstrapClassWise(), bootstrapWithoutReplacementClassWise(). These functions is working now.
      if (!manual_inbag->empty()) {
-         // TODO: Need to debug
          setManualInbag();
      } else {
          if (sample_with_replacement) {
              // Rcpp::Rcout << "Start tree::bootstrapClassWise" << std::endl;        // Debug Line    
              bootstrapClassWise();
          } else {
-             // TODO: Need to debug
              // Rcpp::Rcout << "Start tree::bootstrapWithoutReplacementClassWise" << std::endl;        // Debug Line         
              bootstrapWithoutReplacementClassWise();
          }
@@ -133,72 +114,57 @@
      start_pos[0] = 0;
      end_pos[0] = sampleIDs.size();
      
+     
+     /*-----------------------------------------------------------------------
+        Create Splits
+     #-----------------------------------------------------------------------*/
+     
      // While not all nodes terminal, split next node
      size_t num_open_nodes = 1;
      size_t i = 0;
      depth = 0;
-     
-     // Rcpp::Rcout << "Starting creating Split" << std::endl;       //Debug Line
-     
+
      while (num_open_nodes > 0) {
          // Split node
-         // TODO: debug the node splitting
          bool is_terminal_node = splitNode(i);
          if (is_terminal_node) {
              --num_open_nodes;
          } else {
              ++num_open_nodes;
              if (i >= last_left_nodeID) {
-                 // If new level, increase depth
-                 // (left_node saves left-most node in current level, new level reached if that node is splitted)
-                 
-                 // last_left_nodeID = split_varIDs.size() - 2;
-                 // NOTE:: I changed from split_varIDs.size() to child_nodes.size() They should both work
+                 // NOTE: If new level, increase depth
+                 // NOTE: (left_node saves left-most node in current level, new level reached if that node is splitted)
                  last_left_nodeID = child_nodes.size() - 2;
                  ++depth;
              }
          }
-         // Rcpp::Rcout << "Resolve a Node" << std::endl;        // Debug Line
          ++i;
      }
-     // 
-     // Delete sampleID vector to save memory
-     // TODO: figure out if more space can be freed
+     
+     /*-----------------------------------------------------------------------
+        Free Spaces
+     #-----------------------------------------------------------------------*/
+     // NOTE: It is possible Delete sampleID vector to save memory
      // sampleIDs.clear();
      // sampleIDs.shrink_to_fit();
-     // cleanUpInternal();
      
      // Rcpp::Rcout << "End growing tree" << std::endl;        // Debug Line
  }
  
  
  bool Tree::splitNode(size_t nodeID) {
-     // 
-     // // Select random subset of variables to possibly split at
-     // Boyi:: Doesn't apply to our methods. We don't needs mtry
-     // std::vector<size_t> possible_split_varIDs;
-     // createPossibleSplitVarSubset(possible_split_varIDs);
      
-     // Rcpp::Rcout << "Split Node Started" << std::endl;        // Debug Line
+     // Rcpp::Rcout << "Start Split Node " << nodeID << std::endl;        // Debug Line
      
-     // // Call subclass method, sets split_varIDs and split_values
      bool stop = splitNodeInternal(nodeID);
      if (stop) {
          // Rcpp::Rcout << "Terminal node L231" << std::endl;        // Debug Line
          return true;
      }
-     // 
-     // size_t split_varID = split_varIDs[nodeID];
-     
-     // Rcpp::Rcout << "Node ID" << nodeID << std::endl;        // Debug Line
-     // Rcpp::Rcout << "child nodes size" << child_nodes.size() << std::endl;        // Debug Line
-     
-     
-     double split_value = child_nodes[nodeID]->get_value();
-     vec tmp_coef = child_nodes[nodeID]-> get_coefs();
-     
-     // Rcpp::Rcout << "Got Split  Value" << std::endl;        // Debug Line
-     
+
+     /*-----------------------------------------------------------------------
+        Create Child Nodes
+     #-----------------------------------------------------------------------*/
      // Create child nodes
      size_t left_child_nodeID = child_nodes.size();
      child_nodeIDs[0][nodeID] = left_child_nodeID;
@@ -209,8 +175,15 @@
      child_nodeIDs[1][nodeID] = right_child_nodeID;
      createEmptyNode();
      start_pos[right_child_nodeID] = end_pos[nodeID];
+     // NOTE: Because of the swapping in the next section, start pos of the right child is the end pos
      
-     // Rcpp::Rcout << "Finished Creating Child Noe" << std::endl;        // Debug Line
+     
+     /*-----------------------------------------------------------------------
+        Sort Sample ID
+     #-----------------------------------------------------------------------*/
+     
+     double split_value = child_nodes[nodeID]->get_value();
+     vec tmp_coef = child_nodes[nodeID]-> get_coefs();
      
      // For each sample in node, assign to left or right child
      // Ordered: left is <= splitval and right is > splitval
@@ -233,36 +206,30 @@
      end_pos[left_child_nodeID] = start_pos[right_child_nodeID];
      end_pos[right_child_nodeID] = end_pos[nodeID];
      
-     // Rcpp::Rcout << "After Sording start pos and end pos" << std::endl;        // Debug Line
-     
-     // No terminal node
+     // Not a terminal node
      return false;
  }
+ 
  
  bool Tree::splitNodeInternal(size_t nodeID) {
      
      size_t num_samples_node = end_pos[nodeID] - start_pos[nodeID];
-     // Rcpp::Rcout << "Internal Splitting in Node ID "<< nodeID << std::endl;        // Debug Line
      
-     if(start_pos.size() != end_pos.size()){
-         Rcpp::Rcout << "end_pos.size  "<< end_pos.size() << std::endl;        // Debug Line
-         Rcpp::Rcout << "start_pos.size  "<< start_pos.size() << std::endl;        // Debug Line 
-         throw std::runtime_error("Inconsistent end_pos & start_pos size");
-     }
+     //TODO: this part could be removed
+     //NOTE: was set up trying to debug
+     // if(start_pos.size() != end_pos.size()){                                   // Debug Line
+     //     Rcpp::Rcout << "end_pos.size  "<< end_pos.size() << std::endl;        // Debug Line
+     //     Rcpp::Rcout << "start_pos.size  "<< start_pos.size() << std::endl;        // Debug Line 
+     //     throw std::runtime_error("Inconsistent end_pos & start_pos size");     // Debug Line
+     // }                                                                          // Debug Line
      
      // finding all the sampleIDs in the current node
      IntegerVector indices;
      for (size_t pos = start_pos[nodeID]; pos < end_pos[nodeID]; ++pos) {
-         // Rcpp::Rcout << "SampleID  "<< sampleIDs[pos] << std::endl;        // Debug Line
          indices.push_back(sampleIDs[pos]);
      }
-     // Rcpp::Rcout << "# of Samples: " << indices.size() << std::endl;        // Debug Line
-     // Rcpp::Rcout << "After getting y diff rows for datasets " << data->n_y_diff_rows() << std::endl;       // Debug Line
      
      vec tmp_trt = data->get_trt(as<uvec>(indices));
-     // Rcpp::Rcout << "After Finding Treatmnents" << std::endl;        // Debug Line
-     
-     // The following index variables are the index fo the indices
      uvec idx_1 = find(tmp_trt==1);
      uvec idx_2 = find(tmp_trt==-1);
      
@@ -273,33 +240,35 @@
      rowvec sum_outcome2;
      
      size_t q = data->get_y_cols();
+     size_t p = data->getNumCols();
      
-     // Rcpp::Rcout << "After Calculate outcome SIze" << std::endl;        // Debug Line
      if(n_outcome1 == 0) sum_outcome1 = rowvec( q, fill::zeros);
      else sum_outcome1 = colSums(data->get_y_diff_rows(as<uvec>(indices[as<NumericVector>(wrap(idx_1))])));
-     // Rcpp::Rcout << "After Calculate Average SIze for outcome 1" << std::endl;        // Debug Line
-     // Rcpp::Rcout << idx_2 << std::endl;        // Debug Line
      if(n_outcome2 == 0) sum_outcome2 = rowvec( q, fill::zeros);
      else sum_outcome2 = colSums(data->get_y_diff_rows(as<uvec>(indices[as<NumericVector>(wrap(idx_2))])));
      
      
-     // Rcpp::Rcout << "Summairze Outcomes" << std::endl;        // Debug Line
-     // Stop if maximum node size or depth reached
-     if (n_outcome2 == 0 || n_outcome1 == 0|| num_samples_node <= min_node_size || (nodeID >= last_left_nodeID && max_depth > 0 && depth >= max_depth)) {
+    
+    /*-----------------------------------------------------------------------
+        Base Cases
+    #-----------------------------------------------------------------------*/
+     if ( std::min(n_outcome1, n_outcome2) <= std::max(p, q) || // Stop if sample size too small for CCA
+         n_outcome2 == 0 || n_outcome1 == 0 ||       // Stop if no Samples in any Treatment Arm
+         num_samples_node <= min_node_size ||       // Stop if maximum node size or depth reached
+         (nodeID >= last_left_nodeID && max_depth > 0 && depth >= max_depth) // Stop if  depth reached
+             ) {
          
-         // child_nodes[nodeID]->set_leaf(true);
          child_nodes[nodeID]->set_n(n_outcome1, n_outcome2);
          child_nodes[nodeID]->set_sum(sum_outcome1, sum_outcome2);
          return true;
      }
      
      
-     // Rcpp::Rcout << "Before Find Best Split" << std::endl;        // Debug Line
-     // TODO: debug findBestSplit(nodeID) function
+     /*-----------------------------------------------------------------------
+          Find Best Split
+     #-----------------------------------------------------------------------*/
      bool stop = findBestSplit(nodeID);
-     
      if (stop) {
-         // child_nodes[nodeID]->set_leaf(true);
          child_nodes[nodeID]->set_n(n_outcome1, n_outcome2);
          child_nodes[nodeID]->set_sum(sum_outcome1, sum_outcome2);
          return true;
@@ -309,7 +278,6 @@
      
      return false;
  }
- 
  
  
  void Tree::createEmptyNode() {
@@ -384,6 +352,7 @@
      }
  }
  
+ 
  void Tree::setManualInbag() {
      // Select observation as specified in manual_inbag vector
      sampleIDs.reserve(manual_inbag->size());
@@ -410,52 +379,25 @@
      }
  }
  
- // TODO: need some customization here
- void Tree::cleanUpInternal() {
-     // counter.clear();
-     // counter.shrink_to_fit();
-     // counter_per_class.clear();
-     // counter_per_class.shrink_to_fit();
-     // sums.clear();
-     // sums.shrink_to_fit();
- }
  
  bool Tree::findBestSplit(size_t nodeID) {
      
-     // size_t num_samples_node = end_pos[nodeID] - start_pos[nodeID];
      
      // Retrieve Data
+     // NOTE: This is repetitive of in SplitNodeInternal
      IntegerVector indices;
      for (size_t pos = start_pos[nodeID]; pos < end_pos[nodeID]; ++pos) {
          indices.push_back(sampleIDs[pos]);
      }
-     
-     // Rcpp::Rcout << "Finding Best Split for Node IDs" << std::endl;        // Debug Line
-     
-     // Retrieve data
      vec tmp_trt = data->get_trt(as<uvec>(indices));
      uvec idx_1 = find(tmp_trt==1);
      uvec idx_2 = find(tmp_trt==-1);
      
      
-     // Rcpp::Rcout << "# of idx_1 " << idx_1.n_elem << std::endl;        // Debug Line
-     // Rcpp::Rcout << "# of idx_2 " << idx_2.n_elem << std::endl;        // Debug Line     
-     // Rcpp::Rcout << "idx_1" << idx_1 << std::endl;        // Debug Line  
-     // Rcpp::Rcout << "idx_2" << idx_2  << std::endl;        // Debug Line          
-     
-     // size_t n_outcome1 = idx_1.n_elem;
-     // size_t n_outcome2 = idx_2.n_elem;
-     
-     
      // Retrieve X_b
      mat x_b = data->get_x_b_rows(as<uvec>(indices));
-     // Retrieve x_diff;
-     // mat x_e = (data->get_x_e_rows(as<uvec>(indices)));
      mat x_diff = data->get_x_diff_rows(as<uvec>(indices));
-     // Retrieve y_diff
      mat y_diff = data->get_y_diff_rows(as<uvec>(indices));
-     
-     // size_t ncol_x_b = x_b.n_cols;
      
      
      size_t p = x_b.n_cols;
@@ -741,24 +683,6 @@
          prediction_terminal_nodeIDs[i] = nodeID;
      }
  }
- 
- // TODO: could be removed
- // void Tree::addImportance(size_t nodeID, const vec& coefs){
- //   
- //        // if((child_nodes[nodeID]->get_samplesize())==0)    // Debug Line
- //        //   throw std::runtime_error("sample size is 0");   // Debug Line
- //        Rcpp::Rcout <<  "Sample Size" << child_nodes[nodeID]->get_samplesize() << std::endl; // Debug Line
- //   
- //   Rcpp::Rcout << coefs << std::endl; // Debug Line
- //   
- //         vec incrmt  = (child_nodes[nodeID]->get_samplesize()) * coefs;
- //        Rcpp::Rcout << "incrmt:" << incrmt << std::endl; // Debug Line
- //        
- //         
- //         (*variable_importance) += incrmt;
- // }
- // 
- 
  
  } // namespace MOTE
  

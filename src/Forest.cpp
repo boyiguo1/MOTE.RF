@@ -209,7 +209,7 @@
          uvec idx_1 = find(tmp_trt==1); // Indices for trtment lvl 1 (ref level)
          uvec idx_2 = find(tmp_trt==-1); // Indices for trtment lvl 2
          
-         sampleIDs_per_class.resize(sample_fraction.size());   // How to be 2
+         sampleIDs_per_class.resize(sample_fraction.size());   // Have to be 2
          
          sampleIDs_per_class[0] = conv_to<std::vector<size_t>>::from(idx_1);
          sampleIDs_per_class[1] =  conv_to<std::vector<size_t>>::from(idx_2);       

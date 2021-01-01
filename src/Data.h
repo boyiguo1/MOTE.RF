@@ -130,11 +130,7 @@ using namespace arma;
    
    mat x_b;
    mat x_diff;
-   // mat x_e;
-   // mat y_b;
-   // mat y_e;
    mat y_diff;
-   // mat Z;
    
    
    // bool externalData;

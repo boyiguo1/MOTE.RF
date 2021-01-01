@@ -25,7 +25,6 @@
      // Create from loaded forest
      Tree(std::vector<std::vector<size_t>>& child_nodeIDs,
           std::vector<Rcpp::List>& child_nodes
-              // std::vector<size_t>& split_varIDs,std::vector<double>& split_values
      );
      
      Tree(const Tree&) = delete;
@@ -105,7 +104,7 @@
      
      // Clean up functions
      // TODO: seems useless function and be removed
-     void cleanUpInternal();
+     // void cleanUpInternal();
      
      // Function to make splits
      bool splitNode(size_t nodeID);
@@ -119,8 +118,6 @@
                              double& best_value, //rowvec& best_coefs,
                              double& best_decrease);
      
-     // Update Variance Importance 
-     // void addImportance(size_t nodeID, const vec& coefs);
      
      /*------------------ Functions Ends --------------------*/
      
@@ -136,14 +133,14 @@
      uint num_random_splits;
      uint max_depth;
      
-     // TODO: need to write the constructor for it.
-     const std::vector<std::vector<size_t>>* sampleIDs_per_class;
+     const std::vector<std::vector<size_t>>* sampleIDs_per_class;   // vectors of sample ID of treatment groups (0,1)
+     // NOTE: sampleIDs_per_class contains all samples, not only inbag for this tree
+     // NOTE: only used when creating bootstrap samples
      
      // Bootstrapping & Inbag
      bool keep_inbag;
      std::vector<size_t> inbag_counts;
-     // Pre-selected bootstrap samples
-     const std::vector<size_t>* manual_inbag;
+     const std::vector<size_t>* manual_inbag;        // Pre-selected inbag samples
      bool sample_with_replacement;
      const std::vector<double>* sample_fraction;
 
@@ -165,12 +162,16 @@
       * Vector of start_pos & end_pos (samples in the corresponding node)
      #-----------------------------------------------------------------------*/
 
-      // All sampleIDs that are used to construct tree, are re-ordered while splitting
-      std::vector<size_t> sampleIDs;
+       
+      std::vector<size_t> sampleIDs;        // In-bag sampleIDs
+      // NOTE: Created when bootstrapping samples
+      // NOTE: Reordered when growing
+      // NOTE: Could be cleared at the end of grow for space efficiency
       
       uint depth;                                         // Depth of the tree
       
       std::vector<std::vector<size_t>> child_nodeIDs;     // Vector of left and right child node IDs, 0 for no child
+      // TODO: it would be more self-explanatory to rename child_nodes as tree_nodes
       std::vector<std::unique_ptr<Node>> child_nodes;     // Information related to each node
 
       std::vector<size_t> start_pos;                      // For each node a vector with start and end positions
