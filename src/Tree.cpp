@@ -227,6 +227,8 @@
          indices.push_back(sampleIDs[pos]);
      }
      
+     if(indices.length()<1) std::runtime_error("Empty Indices");
+     
      // NOTE: idx_1, and idx_2 are the index of the IntegerVector indices,
      //       instead of the index in the original dataset.
      //       See example below when calculating sum
@@ -522,6 +524,7 @@
      }
      
      vec split_can_final = split_can.elem(randperm(split_can.n_elem, std::min(num_random_splits, split_can.n_elem)));
+     Rcpp::Rcout << "Split_can_final: " << split_can_final << std::endl;        // Debug Line 
      
      
      // Initiate variables for the final split results
@@ -529,13 +532,9 @@
      double best_value = 0;
      rowvec x_b_center = mean(x_b,0);
      
-     // TODO: calculate the variance reduction & Choose the best split
      findBestSplitValue(nodeID, 
                         proj_x, proj_y, split_can_final,
                         best_value, best_decrease);
-     
-     // Rcpp::Rcout << "After findBestSplitValue"<< std::endl;        // Debug Line
-     
      
      
      // Stop if no good split found
@@ -552,17 +551,10 @@
      child_nodes[nodeID]->set_coef(coef_x);
      child_nodes[nodeID]->set_value(best_value + dot(x_b_center, coef_x));
      
-     // uvec L_indices_proj = find(proj_x < best_value); // debug line
-     // uvec R_indices_proj = find(proj_x >= best_value);// debug line
-     // Rcpp::Rcout << "[Use Proj] # of Left Child is " << L_indices_proj.n_elem << std::endl;  // debug line
-     // Rcpp::Rcout << "[Use Proj] # of Right Child is " << R_indices_proj.n_elem << std::endl; // debug line
-     
-     // uvec L_indices = find(x_b*coef_x < best_value + dot(x_b_center, coef_x)); // debug line
-     // uvec R_indices = find(x_b*coef_x >= best_value + dot(x_b_center, coef_x));// debug line
-     // Rcpp::Rcout << "[add center] # of Left Child is " << L_indices.n_elem << std::endl;  // debug line
-     // Rcpp::Rcout << "[add center] # of Right Child is " << R_indices.n_elem << std::endl; // debug line
-     
-     
+     uvec L_indices_proj = find(proj_x < best_value); // debug line
+     uvec R_indices_proj = find(proj_x >= best_value);// debug line
+     Rcpp::Rcout << "[Use Proj] # of Left Child is " << L_indices_proj.n_elem << std::endl;  // debug line
+     Rcpp::Rcout << "[Use Proj] # of Right Child is " << R_indices_proj.n_elem << std::endl; // debug line
      
      // Compute Variable Importance
      vec incrmt  = n * coef_x;
@@ -571,17 +563,15 @@
      return false;
  }
  
- // TODO: Debug this function
  void Tree::findBestSplitValue(size_t nodeID,
                                const vec& proj_x, const vec& proj_y, const vec& split_can_final,
                                double& best_value,
                                double& best_decrease) {
      
-     
      size_t num_unique = split_can_final.n_elem;
      
      // For loop to iterate over each unique value
-     for (size_t i = 0; i < num_unique - 1; ++i) {
+     for (size_t i = 0; i < num_unique; ++i) {
          
          // Make the cut
          uvec L_indices = find(proj_x <= split_can_final[i]);
@@ -591,7 +581,7 @@
          
          double decrease = -1;
          // calculate impurity
-         if(L_length > 1 && R_length >1)
+         if(L_length > 1 && R_length > 1)
             decrease = (L_length-1)*var(proj_y.elem(L_indices)) + (R_length-1)*var(proj_y.elem(R_indices));
          
          // Check with best
