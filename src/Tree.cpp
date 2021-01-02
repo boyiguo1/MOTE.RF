@@ -255,7 +255,7 @@
      rowvec sum_outcome2 = rowvec( q, fill::zeros);
      
      
-     Rcpp::Rcout << "Index Conversion seg faul starts" << std::endl;        // Debug Line
+     // Rcpp::Rcout << "Index Conversion seg faul starts" << std::endl;        // Debug Line
      //TODO: to remove later
      if(n_outcome1!=0){
          // uvec data_idx_1 = as<uvec>(indices[as<NumericVector>(wrap(idx_1))]);
@@ -272,7 +272,7 @@
          n_2_unique = tmp2.n_elem;
          sum_outcome2 = colSums(data->get_y_diff_rows(data_idx_2));
      }
-     Rcpp::Rcout << "Index Conversion seg faul starts" << std::endl;        // Debug Line
+     // Rcpp::Rcout << "Index Conversion seg faul starts" << std::endl;        // Debug Line
     
     /*-----------------------------------------------------------------------
         Base Cases
@@ -487,7 +487,7 @@
      // TODO: find a C++ implementation of CCA, such that parallel computing is possible
      mat cca_res = cancor(left, right); 
      
-     Rcpp::Rcout << "CCA seg faul starts" << std::endl;        // Debug Line
+     // Rcpp::Rcout << "CCA seg faul starts" << std::endl;        // Debug Line
      // Base case: degenerated CCA solution
      if(std::min(cca_res.n_cols, cca_res.n_rows) < (2*p+q)){    
          // Rcpp::Rcout << "CCA_res columns" << cca_res.n_cols << std::endl;        // Debug Line              
@@ -499,7 +499,7 @@
      // Extract CCA coef for X_b and y_diff
      vec coef_x = (cca_res.col(0)).subvec(0, p-1);
      vec coef_y = (cca_res.col(0)).subvec(2*p, 2*p+q-1);
-     Rcpp::Rcout << "CCA seg faul ends" << std::endl;        // Debug Line
+     // Rcpp::Rcout << "CCA seg faul ends" << std::endl;        // Debug Line
 
      // Calculate projections
      vec proj_x = x_b_centered * coef_x;
