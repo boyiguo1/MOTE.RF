@@ -222,17 +222,24 @@
      // }                                                                          // Debug Line
      
      // finding all the sampleIDs in the current node
-     IntegerVector indices;
+     // IntegerVector indices;
+     // for (size_t pos = start_pos[nodeID]; pos < end_pos[nodeID]; ++pos) {
+     //     indices.push_back(sampleIDs[pos]);
+     // }
+     
+     uvec indices(num_samples_node);
+     size_t offset = start_pos[nodeID];
      for (size_t pos = start_pos[nodeID]; pos < end_pos[nodeID]; ++pos) {
-         indices.push_back(sampleIDs[pos]);
+         indices(pos-offset) = sampleIDs[pos];
      }
      
-     if(indices.length()<1) std::runtime_error("Empty Indices");                // Debug Line
+     if(indices.n_elem == 0 || indices.has_nan()) std::runtime_error("Empty Indices");                // Debug Line
      
      // NOTE: idx_1, and idx_2 are the index of the IntegerVector indices,
      //       instead of the index in the original dataset.
      //       See example below when calculating sum
-     vec tmp_trt = data->get_trt(as<uvec>(indices));
+     // vec tmp_trt = data->get_trt(as<uvec>(indices));
+     vec tmp_trt = data->get_trt(indices);
      uvec idx_1 = find(tmp_trt==1);
      uvec idx_2 = find(tmp_trt==-1);
      
@@ -251,14 +258,16 @@
      Rcpp::Rcout << "Index Conversion seg faul starts" << std::endl;        // Debug Line
      //TODO: to remove later
      if(n_outcome1!=0){
-         uvec data_idx_1 = as<uvec>(indices[as<NumericVector>(wrap(idx_1))]);
+         // uvec data_idx_1 = as<uvec>(indices[as<NumericVector>(wrap(idx_1))]);
+         uvec data_idx_1 = indices.elem(idx_1);
          uvec tmp1 = unique(data_idx_1);
          n_1_unique = tmp1.n_elem;
          sum_outcome1 = colSums(data->get_y_diff_rows(data_idx_1));
      }
          
      if(n_outcome2!=0){                                       
-         uvec data_idx_2 = as<uvec>(indices[as<NumericVector>(wrap(idx_2))]);
+         // uvec data_idx_2 = as<uvec>(indices[as<NumericVector>(wrap(idx_2))]);
+         uvec data_idx_2 = indices.elem(idx_2);
          uvec tmp2 = unique(data_idx_2); 
          n_2_unique = tmp2.n_elem;
          sum_outcome2 = colSums(data->get_y_diff_rows(data_idx_2));
