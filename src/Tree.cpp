@@ -247,6 +247,8 @@
      rowvec sum_outcome1 = rowvec( q, fill::zeros);
      rowvec sum_outcome2 = rowvec( q, fill::zeros);
      
+     
+     Rcpp::Rcout << "Index Conversion seg faul starts" << std::endl;        // Debug Line
      //TODO: to remove later
      if(n_outcome1!=0){
          uvec data_idx_1 = as<uvec>(indices[as<NumericVector>(wrap(idx_1))]);
@@ -259,8 +261,9 @@
          uvec data_idx_2 = as<uvec>(indices[as<NumericVector>(wrap(idx_2))]);
          uvec tmp2 = unique(data_idx_2); 
          n_2_unique = tmp2.n_elem;
-         colSums(data->get_y_diff_rows(data_idx_2));
+         sum_outcome2 = colSums(data->get_y_diff_rows(data_idx_2));
      }
+     Rcpp::Rcout << "Index Conversion seg faul starts" << std::endl;        // Debug Line
     
     /*-----------------------------------------------------------------------
         Base Cases
@@ -475,6 +478,7 @@
      // TODO: find a C++ implementation of CCA, such that parallel computing is possible
      mat cca_res = cancor(left, right); 
      
+     Rcpp::Rcout << "CCA seg faul starts" << std::endl;        // Debug Line
      // Base case: degenerated CCA solution
      if(std::min(cca_res.n_cols, cca_res.n_rows) < (2*p+q)){    
          // Rcpp::Rcout << "CCA_res columns" << cca_res.n_cols << std::endl;        // Debug Line              
@@ -482,10 +486,11 @@
          // Rcpp::Rcout << "Terminal Node: Degernated CCA" << std::endl;        // Debug Line
          return true;
      }
-     
+
      // Extract CCA coef for X_b and y_diff
      vec coef_x = (cca_res.col(0)).subvec(0, p-1);
      vec coef_y = (cca_res.col(0)).subvec(2*p, 2*p+q-1);
+     Rcpp::Rcout << "CCA seg faul ends" << std::endl;        // Debug Line
 
      // Calculate projections
      vec proj_x = x_b_centered * coef_x;
@@ -523,7 +528,7 @@
      }
      
      vec split_can_final = split_can.elem(randperm(split_can.n_elem, std::min(num_random_splits, split_can.n_elem)));
-     Rcpp::Rcout << "Split_can_final: " << split_can_final << std::endl;        // Debug Line 
+     // Rcpp::Rcout << "Split_can_final: " << split_can_final << std::endl;        // Debug Line 
      
      
      // Initiate variables for the final split results
@@ -550,10 +555,10 @@
      child_nodes[nodeID]->set_coef(coef_x);
      child_nodes[nodeID]->set_value(best_value + dot(x_b_center, coef_x));
      
-     uvec L_indices_proj = find(proj_x < best_value); // debug line
-     uvec R_indices_proj = find(proj_x >= best_value);// debug line
-     Rcpp::Rcout << "[Use Proj] # of Left Child is " << L_indices_proj.n_elem << std::endl;  // debug line
-     Rcpp::Rcout << "[Use Proj] # of Right Child is " << R_indices_proj.n_elem << std::endl; // debug line
+     // uvec L_indices_proj = find(proj_x < best_value); // debug line
+     // uvec R_indices_proj = find(proj_x >= best_value);// debug line
+     // Rcpp::Rcout << "[Use Proj] # of Left Child is " << L_indices_proj.n_elem << std::endl;  // debug line
+     // Rcpp::Rcout << "[Use Proj] # of Right Child is " << R_indices_proj.n_elem << std::endl; // debug line
      
      // Compute Variable Importance
      vec incrmt  = n * coef_x;
