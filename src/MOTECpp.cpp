@@ -164,8 +164,8 @@
          }
          
          // Run Ranger
-         // forest->run(false, oob_error);        // original line
-         forest->run(true, oob_error);        // Debug Line
+         forest->run(false, oob_error);        // original line
+         // forest->run(true, oob_error);        // Debug Line
          
          
          // Use first non-empty dimension of predictions

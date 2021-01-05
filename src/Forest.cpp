@@ -292,7 +292,7 @@
                  grow();
                  
                  if (verbose && verbose_out) {
-                         *verbose_out << "Computing prediction error .." << std::endl;
+                         // *verbose_out << "Computing prediction error .." << std::endl;
                  }
                  
                  if (compute_oob_error) {
