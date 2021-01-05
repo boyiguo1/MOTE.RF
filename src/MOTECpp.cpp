@@ -160,7 +160,7 @@
              //     auto& temp = dynamic_cast<ForestProbability&>(*forest);
              //     temp.setClassWeights(class_weights);
              //   }
-             Rcpp::Rcout << "After loading previous forest" << std::endl;        // Debug Line
+             // Rcpp::Rcout << "After loading previous forest" << std::endl;        // Debug Line
          }
          
          // Run Ranger

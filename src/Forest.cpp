@@ -209,7 +209,7 @@
          uvec idx_1 = find(tmp_trt==1); // Indices for trtment lvl 1 (ref level)
          uvec idx_2 = find(tmp_trt==-1); // Indices for trtment lvl 2
          
-         sampleIDs_per_class.resize(sample_fraction.size());   // How to be 2
+         sampleIDs_per_class.resize(sample_fraction.size());   // Have to be 2
          
          sampleIDs_per_class[0] = conv_to<std::vector<size_t>>::from(idx_1);
          sampleIDs_per_class[1] =  conv_to<std::vector<size_t>>::from(idx_2);       
@@ -349,7 +349,8 @@
                                 // &case_weights,
                                 &sampleIDs_per_class,
                                 tree_manual_inbag, keep_inbag,
-                                &sample_fraction, minprop, holdout, num_random_splits, max_depth);
+                                &sample_fraction, minprop, //holdout,
+                                num_random_splits, max_depth);
          }
          
          // *verbose_out << "Finish Initialize "<< num_trees<<" Trees in Grow" << std::endl;               //Debug line
@@ -802,7 +803,7 @@
          // } //Debug line
          // *verbose_out << "Update Prediction" << std::endl;               //Debug line
  }
- 
+
  void Forest::predictInternalInThread(uint thread_idx) {
          // Create thread ranges
          std::vector<uint> predict_ranges;
