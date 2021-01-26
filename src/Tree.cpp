@@ -279,7 +279,7 @@
         Base Cases
     #-----------------------------------------------------------------------*/
      if ( 
-         std::min(n_1_unique, n_2_unique) <= std::max(p, q) || // TODO: added debug line
+         // std::min(n_1_unique, n_2_unique) <= std::max(p, q) || // TODO: added debug line
          std::min(n_outcome1, n_outcome2) <= std::max(p, q) || // Stop if sample size too small for CCA
          n_outcome2 == 0 || n_outcome1 == 0 ||       // Stop if no Samples in any Treatment Arm
          num_samples_node <= min_node_size ||       // Stop if maximum node size or depth reached
