@@ -6,8 +6,6 @@
 # Boyi Guo
 # Department of Biostatistics
 # University of Alabama at Birmingham
-#
-# http://www.imbs-luebeck.de
 # -------------------------------------------------------------------------------
 
 ##' MOTE is a fast implementation of MOTE RF (Guo et al. 2021), a random forest model that simultaneously estimates individualized treatment effects of multivariate outcomes.
