@@ -40,7 +40,7 @@
                uint num_random_splits,
                uint max_depth);
      
-     void grow(vec* variable_importance);
+     void grow(mat* variable_importance);
      
      void predict(const Data* prediction_data, bool oob_prediction);
      
@@ -181,7 +181,7 @@
       
       
       /*------------------ Variable Importance --------------------*/
-      vec* variable_importance;   // Variable importance for all variables
+      mat* variable_importance;   // Variable importance for all variables
       
       
       /*------------------ Prediction --------------------*/

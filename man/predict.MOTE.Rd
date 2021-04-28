@@ -9,10 +9,6 @@
   data = NULL,
   predict.all = FALSE,
   num.trees = object$num.trees,
-  type = "response",
-  se.method = "infjack",
-  quantiles = c(0.1, 0.5, 0.9),
-  what = NULL,
   seed = NULL,
   num.threads = NULL,
   verbose = TRUE,
@@ -28,14 +24,6 @@
 
 \item{num.trees}{Number of trees used for prediction. The first \code{num.trees} in the forest are used.}
 
-\item{type}{Type of prediction. One of 'response', 'se', 'terminalNodes', 'quantiles' with default 'response'. See below for details.}
-
-\item{se.method}{Method to compute standard errors. One of 'jack', 'infjack' with default 'infjack'. Only applicable if type = 'se'. See below for details.}
-
-\item{quantiles}{Vector of quantiles for quantile prediction. Set \code{type = 'quantiles'} to use.}
-
-\item{what}{User specified function for quantile prediction used instead of \code{quantile}. Must return numeric vector, see examples.}
-
 \item{seed}{Random seed. Default is \code{NULL}, which generates the seed from \code{R}. Set to \code{0} to ignore the \code{R} seed. The seed is used in case of ties in classification mode.}
 
 \item{num.threads}{Number of threads. Default is number of CPUs available.}
@@ -43,6 +31,14 @@
 \item{verbose}{Verbose output on or off.}
 
 \item{...}{further arguments passed to or from other methods.}
+
+\item{type}{Type of prediction. One of 'response', 'se', 'terminalNodes', 'quantiles' with default 'response'. See below for details.}
+
+\item{se.method}{Method to compute standard errors. One of 'jack', 'infjack' with default 'infjack'. Only applicable if type = 'se'. See below for details.}
+
+\item{quantiles}{Vector of quantiles for quantile prediction. Set \code{type = 'quantiles'} to use.}
+
+\item{what}{User specified function for quantile prediction used instead of \code{quantile}. Must return numeric vector, see examples.}
 }
 \value{
 Object of class \code{ranger.prediction} with elements

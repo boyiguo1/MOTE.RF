@@ -44,8 +44,23 @@ importance.MOTE <- function(x, ...) {
   if (!inherits(x, "MOTE")) {
     stop("Object ist no MOTE object.")
   }
-  if (is.null(x$variable.importance) || length(x$variable.importance) < 1) {
+  if (is.null(x$variable.importance) || ncol(x$variable.importance) < 1) {
     stop("No variable importance found. Please use 'importance' option when growing the forest.")
   }
-  return(x$variable.importance)
+  
+  FI_eigen <- eigen(x$variable.importance)
+  
+
+  eval <- FI_eigen$values
+  evec <- FI_eigen$vectors
+  
+  res <- vector()
+  for(i in 1:length(eval))
+    res <- cbind(res,eval[i]*evec[,i])
+  
+  FI_res <-rowSums(abs(res))
+  FI_res <- FI_res/max(FI_res)
+  names(FI_res) <- colnames(x$variable.importance)
+  
+  return(FI_res)
 }

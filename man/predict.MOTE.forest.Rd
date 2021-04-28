@@ -9,8 +9,11 @@
   data,
   predict.all = FALSE,
   num.trees = object$num.trees,
+  seed = NULL,
+  num.threads = NULL,
   verbose = TRUE,
   inbag.counts = NULL,
+  q,
   ...
 )
 }
@@ -21,15 +24,15 @@
 
 \item{num.trees}{Number of trees used for prediction. The first \code{num.trees} in the forest are used.}
 
+\item{seed}{Random seed. Default is \code{NULL}, which generates the seed from \code{R}. Set to \code{0} to ignore the \code{R} seed. The seed is used in case of ties in classification mode.}
+
+\item{num.threads}{Number of threads. Default is number of CPUs available.}
+
 \item{verbose}{Verbose output on or off.}
 
 \item{inbag.counts}{Number of times the observations are in-bag in the trees.}
 
 \item{...}{further arguments passed to or from other methods.}
-
-\item{seed}{Random seed. Default is \code{NULL}, which generates the seed from \code{R}. Set to \code{0} to ignore the \code{R} seed. The seed is used in case of ties in classification mode.}
-
-\item{num.threads}{Number of threads. Default is number of CPUs available.}
 }
 \value{
 Object of class \code{ranger.prediction} with elements

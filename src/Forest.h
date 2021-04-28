@@ -139,8 +139,8 @@
    }
    
    
-   
-   const vec& getVariableImportance() const {
+   const mat& getVariableImportance() const {
+   // const vec& getVariableImportance() const {
      return variable_importance;
    }
    // const std::vector<double>& getVariableImportanceCasewise() const {
@@ -197,7 +197,7 @@
    // void computePermutationImportance();
    // 
    // Multithreading methods for growing/prediction/importance, called by each thread
-   void growTreesInThread(uint thread_idx, vec* variable_importance);
+   void growTreesInThread(uint thread_idx, mat* variable_importance);
    void predictTreesInThread(uint thread_idx, const Data* prediction_data, bool oob_prediction);
    void predictInternalInThread(uint thread_idx);
    
@@ -292,10 +292,10 @@
    // std::vector<bool> split_varIDs_used;
    
    // Variable importance for all variables in forest
-   vec variable_importance;
+   mat variable_importance;
    
    // Casewise variable importance for all variables in forest
-   std::vector<double> variable_importance_casewise;
+   // std::vector<double> variable_importance_casewise;
    
    // Computation progress (finished trees)
    size_t progress;
