@@ -40,8 +40,8 @@ treat <- train.dat$trt
 
 
 # scaling test.dat
-# test.dat <- sim.dat$test
-# test.x.b <- test.dat$x.b
+test.dat <- sim.dat$test
+test.x.b <- test.dat$x.b
 # true.trt.diff <- test.dat$y.e.1 - test.dat$y.e.2
 
 ```
@@ -52,9 +52,20 @@ treat <- train.dat$trt
 
 ## Random Forest Fitting
 ```{r}
-# extreme random forest
-RF.mdl <- MOTE(x.b = x.b, x.e = x.e,
-               treat = treat,
-               y.b = y.b, y.e = y.e,
-               sample.fraction = rep(0.8,2))
+ RF.mdl <- MOTE(x.b = x.b, x.e = x.e,
+                treat = treat,
+                y.b = y.b, y.e = y.e,
+                # replace=F,
+                num.trees = 2,
+                num.random.splits = 100,
+                # max.depth=2,
+                sample.fraction = rep(0.8,2),
+                num.threads = 1,
+                verbose=T)
+
+
+predict (RF.mdl, test.x.b)
+
+
+
 ```

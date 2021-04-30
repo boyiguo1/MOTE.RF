@@ -84,7 +84,7 @@
      random_number_generator.seed(seed);
  }
  
- void Tree::grow(vec* variable_importance) {
+ void Tree::grow(mat* variable_importance) {
      
      // Rcpp::Rcout << "Start tree::grow" << std::endl;        // Debug Line
      
@@ -246,8 +246,8 @@
      
      size_t n_outcome1 = idx_1.n_elem;
      size_t n_outcome2 = idx_2.n_elem;
-     size_t n_1_unique = 0;      
-     size_t n_2_unique = 0;
+     // size_t n_1_unique = 0;      
+     // size_t n_2_unique = 0;
      
      size_t q = data->get_y_cols();
      size_t p = data->getNumCols();
@@ -262,7 +262,7 @@
          // uvec data_idx_1 = as<uvec>(indices[as<NumericVector>(wrap(idx_1))]);
          uvec data_idx_1 = indices.elem(idx_1);
          uvec tmp1 = unique(data_idx_1);
-         n_1_unique = tmp1.n_elem;
+         // n_1_unique = tmp1.n_elem;
          sum_outcome1 = colSums(data->get_y_diff_rows(data_idx_1));
      }
          
@@ -270,7 +270,7 @@
          // uvec data_idx_2 = as<uvec>(indices[as<NumericVector>(wrap(idx_2))]);
          uvec data_idx_2 = indices.elem(idx_2);
          uvec tmp2 = unique(data_idx_2); 
-         n_2_unique = tmp2.n_elem;
+         // n_2_unique = tmp2.n_elem;
          sum_outcome2 = colSums(data->get_y_diff_rows(data_idx_2));
      }
      // Rcpp::Rcout << "Index Conversion seg faul starts" << std::endl;        // Debug Line
@@ -427,7 +427,8 @@
      mat x_diff = data->get_x_diff_rows(as<uvec>(indices));
      mat y_diff = data->get_y_diff_rows(as<uvec>(indices));
      
-     size_t p = x_b.n_cols;
+     size_t p_xb = x_b.n_cols;
+     size_t p_x_diff = x_diff.n_cols;
      size_t q = y_diff.n_cols;
      size_t n = x_b.n_rows;
      
@@ -445,10 +446,10 @@
         Matrix Augmentation
      #-----------------------------------------------------------------------*/
      mat left_mat = join_vert(
-         join_horiz(x_b_centered, mat(n, p+q, fill::zeros)), // cbind(.x.b,matrix(0,nrow=n,ncol=p+q))
-         join_horiz(x_b_centered, mat(n, p+q, fill::zeros)), // cbind(.x.b,matrix(0,nrow=n,ncol=p+q))
+         join_horiz(x_b_centered, mat(n, p_x_diff+q, fill::zeros)), // cbind(.x.b,matrix(0,nrow=n,ncol=p+q))
+         join_horiz(x_b_centered, mat(n, p_x_diff+q, fill::zeros)), // cbind(.x.b,matrix(0,nrow=n,ncol=p+q))
          join_horiz(                                         // cbind(matrix(0,nrow=n,ncol=p),T.delta.x, matrix(0,nrow=n,ncol=q))
-             join_horiz(mat(n, p, fill::zeros),
+             join_horiz(mat(n, p_xb, fill::zeros),
                         T_Delta_X),
                         mat(n, q, fill::zeros)
          )
@@ -456,16 +457,16 @@
      
      mat right_mat = join_vert(
          join_vert(
-             join_horiz(mat(n, 2*p, fill::zeros), T_Delta_Y), // cbind(matrix(0,nrow=n,ncol=2*p),T.delta.y)
+             join_horiz(mat(n, p_xb+p_x_diff, fill::zeros), T_Delta_Y), // cbind(matrix(0,nrow=n,ncol=2*p),T.delta.y)
              join_horiz(                                      // cbind(matrix(0,nrow=n,ncol=p),T.delta.x, matrix(0,nrow=n,ncol=q))
                  join_horiz(
-                     mat(n, p, fill::zeros),
+                     mat(n, p_xb, fill::zeros),
                      T_Delta_X
                  ),
                  mat(n, q, fill::zeros)
              )
          ),
-         join_horiz(mat(n, 2*p, fill::zeros), T_Delta_Y)     // cbind(matrix(0,nrow=n,ncol=2*p),T.delta.y)
+         join_horiz(mat(n, p_xb+p_x_diff, fill::zeros), T_Delta_Y)     // cbind(matrix(0,nrow=n,ncol=2*p),T.delta.y)
      );
      
      // Error Prevention: Consistent Matrices Dimensions
@@ -490,7 +491,7 @@
      
      // Rcpp::Rcout << "CCA seg faul starts" << std::endl;        // Debug Line
      // Base case: degenerated CCA solution
-     if(std::min(cca_res.n_cols, cca_res.n_rows) < (2*p+q)){    
+     if(std::min(cca_res.n_cols, cca_res.n_rows) < (p_xb+p_x_diff+q)){    
          // Rcpp::Rcout << "CCA_res columns" << cca_res.n_cols << std::endl;        // Debug Line              
          // Rcpp::Rcout << "CCA_res rows" << cca_res.n_rows << std::endl;        // Debug Line                 
          // Rcpp::Rcout << "Terminal Node: Degernated CCA" << std::endl;        // Debug Line
@@ -498,8 +499,8 @@
      }
 
      // Extract CCA coef for X_b and y_diff
-     vec coef_x = (cca_res.col(0)).subvec(0, p-1);
-     vec coef_y = (cca_res.col(0)).subvec(2*p, 2*p+q-1);
+     vec coef_x = (cca_res.col(0)).subvec(0, p_xb-1);
+     vec coef_y = (cca_res.col(0)).subvec(p_xb+p_x_diff, p_xb+p_x_diff+q-1);
      // Rcpp::Rcout << "CCA seg faul ends" << std::endl;        // Debug Line
 
      // Calculate projections
@@ -571,8 +572,10 @@
      // Rcpp::Rcout << "[Use Proj] # of Right Child is " << R_indices_proj.n_elem << std::endl; // debug line
      
      // Compute Variable Importance
-     vec incrmt  = n * coef_x;
-     (*variable_importance) += incrmt;
+     // TODO: this could cause numeric problem when n is too large or dot product is too large.
+     
+     mat incrmt =  coef_x * coef_x.t();
+     (*variable_importance) += (incrmt*n);
      
      return false;
  }

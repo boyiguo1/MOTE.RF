@@ -357,7 +357,8 @@
          
          // Init variable importance
          // variable_importance.resize(num_independent_variables, 0);
-         variable_importance = vec(num_independent_variables, fill::zeros);
+         // variable_importance = vec(num_independent_variables, fill::zeros);
+         variable_importance = mat(num_independent_variables, num_independent_variables, fill::zeros);
          
          // Debug case when there is only tree
          // trees[1]->grow(&variable_importance); //Debug line
@@ -373,7 +374,10 @@
          clock_t start_time = clock();
          clock_t lap_time = clock();
          for (size_t i = 0; i < num_trees; ++i) {
+                 // vec tmp_vi(num_independent_variables, fill::zeros);
                  trees[i]->grow(&variable_importance);
+                 // variable_importance.row(i) = tmp_vi.t();
+                 
                  progress++;
                  showProgress("Growing trees..", start_time, lap_time);
          }
@@ -390,14 +394,21 @@
          threads.reserve(num_threads);
          
          // Initialize importance per thread
-         std::vector<vec> variable_importance_threads(num_threads);
+         std::vector<mat> variable_importance_threads(num_threads);
          // *verbose_out << "Start to Fit Tree Parallell" << std::endl;               //Debug line
          for (uint i = 0; i < num_threads; ++i) {
                  // TODO: Do I need to create for each one
                  // Yes I need
                  // if (importance_mode == IMP_GINI || importance_mode == IMP_GINI_CORRECTED || importance_mode == IMP_GINI_OOB) {
-                 variable_importance_threads[i] = vec(num_independent_variables, fill::zeros);
+                // if(thread_ranges.size() <= i){
+                        // throw std::runtime_error("thread_ranges size is wrong");        // Debug line
+                // }
+                        
+                // uint num_thread_tree = thread_ranges[i+1]-thread_ranges[i];
+                 variable_importance_threads[i] = mat(num_independent_variables, num_independent_variables, fill::zeros);
                  // }
+                 // threads.emplace_back(&Forest::growTreesInThread, this, i, &(variable_importance_threads[i]));
+ 
                  threads.emplace_back(&Forest::growTreesInThread, this, i, &(variable_importance_threads[i]));
          }
          showProgress("Growing trees..", num_trees);
@@ -413,14 +424,17 @@
          
          // Sum thread importances
          //          if (importance_mode == IMP_GINI || importance_mode == IMP_GINI_CORRECTED || importance_mode == IMP_GINI_OOB) {
-         variable_importance = vec(num_independent_variables, fill::zeros);
-         for (size_t i = 0; i < num_independent_variables; ++i) {
+         // variable_importance = vec(num_independent_variables, fill::zeros);
+         // for (size_t i = 0; i < num_independent_variables; ++i) {
                  for (uint j = 0; j < num_threads; ++j) {
-                         variable_importance[i] += variable_importance_threads[j][i];
+                         
+                         // TODO: need to this part change this.
+                         variable_importance += variable_importance_threads[j];
+                         // variable_importance.rows(thread_ranges[j], thread_ranges[j+1]-1) = variable_importance_threads[j];
                  }
-         }
+         // }
          // TODO: remove useless vec
-         //                  variable_importance_threads.clear();
+                          variable_importance_threads.clear();
          // }
          
 #endif
@@ -502,9 +516,15 @@
  
 #ifndef OLD_WIN_R_BUILD
  // TODO: change variable_important to Vec * if keeping
- void Forest::growTreesInThread(uint thread_idx, vec* variable_importance) {
+ void Forest::growTreesInThread(uint thread_idx, mat* variable_importance) {
          if (thread_ranges.size() > thread_idx + 1) {
                  for (size_t i = thread_ranges[thread_idx]; i < thread_ranges[thread_idx + 1]; ++i) {
+                         
+                         
+                         // vec tmp_vi(num_independent_variables, fill::zeros);
+                         // trees[i]->grow(&tmp_vi);
+                         // variable_importance->row(i) = tmp_vi.t();
+                         
                          trees[i]->grow(variable_importance);
                          
                          // Check for user interrupt

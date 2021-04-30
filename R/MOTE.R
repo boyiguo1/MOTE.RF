@@ -121,7 +121,7 @@ MOTE <- function(#formula = NULL, data = NULL,
                   class.weights = NULL,
                   keep.inbag = FALSE, inbag = NULL, holdout = FALSE,
                   oob.error = TRUE,
-                  num.threads = NULL,
+                  num.threads = 1,
                   verbose = TRUE, seed = NULL, 
                   dependent.variable.name = NULL, 
                   trt.variable.name = NULL, 
@@ -363,7 +363,7 @@ MOTE <- function(#formula = NULL, data = NULL,
   ## No loaded forest object
   loaded.forest <- list()
   
-  x.b.new <- cbind(x.b, Z)
+  x.b.new <- cbind(Z, x.b)
   x.diff <- x.e - x.b
   independent.variable.names <- colnames(x.b.new)
   if(is.null(independent.variable.names))
@@ -395,7 +395,7 @@ MOTE <- function(#formula = NULL, data = NULL,
   
   ## Prepare results
   # Varable importance
-  names(result$variable.importance) <- all.independent.variable.names
+  colnames(result$variable.importance) <- all.independent.variable.names
   
   # if (oob.error) {
     # # TODO:organize the structure for prediction results
