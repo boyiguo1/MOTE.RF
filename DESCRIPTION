@@ -17,7 +17,10 @@ Authors@R: c(
 Description: Multivariate Random Forest to estimate hetoerogeneous treatment effect for binary treatments.
 License: GPL (>= 2)
 Depends: R (>= 3.6.0)
-Imports: Rcpp (>= 1.0.5)
+Imports: 
+    Matrix,
+    MASS,
+    Rcpp (>= 1.0.5)
 LinkingTo: Rcpp, RcppArmadillo
 URL: https://github.com/boyiguo1/MOTE.RF
 BugReports: https://github.com/boyiguo1/MOTE.RF/issues
@@ -26,3 +29,4 @@ Suggests:
     knitr,
     rmarkdown
 VignetteBuilder: knitr
+Encoding: UTF-8

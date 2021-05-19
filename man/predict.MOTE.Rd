@@ -68,25 +68,9 @@ For classification and \code{predict.all = TRUE}, a factor levels are returned a
 To retrieve the corresponding factor levels, use \code{rf$forest$levels}, if \code{rf} is the ranger object.
 }
 \examples{
-## Classification forest
-ranger(Species ~ ., data = iris)
-train.idx <- sample(nrow(iris), 2/3 * nrow(iris))
-iris.train <- iris[train.idx, ]
-iris.test <- iris[-train.idx, ]
-rg.iris <- ranger(Species ~ ., data = iris.train)
-pred.iris <- predict(rg.iris, data = iris.test)
-table(iris.test$Species, pred.iris$predictions)
+# TODO: add example here
+a <- 1
 
-## Quantile regression forest
-rf <- ranger(mpg ~ ., mtcars[1:26, ], quantreg = TRUE)
-pred <- predict(rf, mtcars[27:32, ], type = "quantiles", quantiles = c(0.1, 0.5, 0.9))
-pred$predictions
-
-## Quantile regression forest with user-specified function
-rf <- ranger(mpg ~ ., mtcars[1:26, ], quantreg = TRUE)
-pred <- predict(rf, mtcars[27:32, ], type = "quantiles", 
-                what = function(x) sample(x, 10, replace = TRUE))
-pred$predictions
 
 }
 \references{

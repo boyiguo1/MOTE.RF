@@ -29,14 +29,14 @@
 #' cov.mat = diag(p)
 #' trt.f = "Polynomial"
 #' link.f = "Polynomial"
-##' B = create.B(p)
-##' Z = create.Z(p,q)
-##'
-##'
-##' sim.dat <- sim_MOTE_data( n.train = 500, n.test = 200,
-##' p = 10, q = 3, ratio = 0.5,
-##' B = B, Z = Z)
-##'
+#' B = create.B(p)
+#' Z = create.Z(p,q)
+#'
+#'
+#' sim.dat <- sim_MOTE_data( n.train = 500, n.test = 200,
+#' p = 10, q = 3, ratio = 0.5,
+#' B = B, Z = Z)
+#'
 
 
 

@@ -1,0 +1,3 @@
+useDynLib(MOTE.RF, .registration=TRUE)
+exportPattern("^[[:alpha:]]+")
+importFrom(Rcpp, evalCpp)

@@ -3,3 +3,6 @@
 ^_pkgdown\.yml$
 ^docs$
 ^pkgdown$
+^Archived_Files$
+^.*_backup$
+^test_example.R$

@@ -429,25 +429,9 @@ predict.MOTE.forest <- function(object, data, predict.all = FALSE,
 ##'       \code{num.samples}     \tab Number of samples.
 ##'   }
 ##' @examples
-##' ## Classification forest
-##' ranger(Species ~ ., data = iris)
-##' train.idx <- sample(nrow(iris), 2/3 * nrow(iris))
-##' iris.train <- iris[train.idx, ]
-##' iris.test <- iris[-train.idx, ]
-##' rg.iris <- ranger(Species ~ ., data = iris.train)
-##' pred.iris <- predict(rg.iris, data = iris.test)
-##' table(iris.test$Species, pred.iris$predictions)
+##' # TODO: add example here
+##' a <- 1
 ##' 
-##' ## Quantile regression forest
-##' rf <- ranger(mpg ~ ., mtcars[1:26, ], quantreg = TRUE)
-##' pred <- predict(rf, mtcars[27:32, ], type = "quantiles", quantiles = c(0.1, 0.5, 0.9))
-##' pred$predictions
-##' 
-##' ## Quantile regression forest with user-specified function
-##' rf <- ranger(mpg ~ ., mtcars[1:26, ], quantreg = TRUE)
-##' pred <- predict(rf, mtcars[27:32, ], type = "quantiles", 
-##'                 what = function(x) sample(x, 10, replace = TRUE))
-##' pred$predictions
 ##' 
 ##' @references
 ##' \itemize{

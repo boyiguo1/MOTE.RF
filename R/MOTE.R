@@ -77,21 +77,16 @@
 ##'   \item{\code{inbag.counts}}{Number of times the observations are in-bag in the trees.}
 ##' @examples
 ##' set.seed(1)
+##' 
+##' p = 10
+##' q = 3
 ##'
 ##' B = create.B(p)
 ##' Z = create.Z(p,q)
 ##'
 ##' sim.dat <- sim_MOTE_data(B = B, Z = Z)
 ##' 
-##' ## Classification forest with default settings
-##' MOTE(Species ~ ., data = iris)
 ##'
-##' ## Prediction
-##' train.idx <- sample(nrow(iris), 2/3 * nrow(iris))
-##' iris.train <- iris[train.idx, ]
-##' iris.test <- iris[-train.idx, ]
-##' rg.iris <- ranger(Species ~ ., data = iris.train)
-##' pred.iris <- predict(rg.iris, data = iris.test)
 ##' 
 ##'
 ##'
