@@ -15,7 +15,7 @@ Authors@R: c(
            comment = c(ORCID = "0000-0002-0753-5716"))
            )
 Description: Multivariate Random Forest to estimate hetoerogeneous treatment effect for binary treatments.
-License: GPL (>= 2)
+License: MIT + file LICENSE
 Depends: R (>= 3.6.0)
 Imports: 
     Matrix,
