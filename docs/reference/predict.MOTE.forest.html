@@ -72,7 +72,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">MOTE.RF</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.2.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.3.0.9000</span>
       </span>
     </div>
 
@@ -135,8 +135,11 @@
   <span class='va'>data</span>,
   predict.all <span class='op'>=</span> <span class='cn'>FALSE</span>,
   num.trees <span class='op'>=</span> <span class='va'>object</span><span class='op'>$</span><span class='va'>num.trees</span>,
+  seed <span class='op'>=</span> <span class='cn'>NULL</span>,
+  num.threads <span class='op'>=</span> <span class='cn'>NULL</span>,
   verbose <span class='op'>=</span> <span class='cn'>TRUE</span>,
   inbag.counts <span class='op'>=</span> <span class='cn'>NULL</span>,
+  <span class='va'>q</span>,
   <span class='va'>...</span>
 <span class='op'>)</span></pre>
 
@@ -156,6 +159,14 @@
       <td><p>Number of trees used for prediction. The first <code>num.trees</code> in the forest are used.</p></td>
     </tr>
     <tr>
+      <th>seed</th>
+      <td><p>Random seed. Default is <code>NULL</code>, which generates the seed from <code>R</code>. Set to <code>0</code> to ignore the <code>R</code> seed. The seed is used in case of ties in classification mode.</p></td>
+    </tr>
+    <tr>
+      <th>num.threads</th>
+      <td><p>Number of threads. Default is number of CPUs available.</p></td>
+    </tr>
+    <tr>
       <th>verbose</th>
       <td><p>Verbose output on or off.</p></td>
     </tr>
@@ -166,14 +177,6 @@
     <tr>
       <th>...</th>
       <td><p>further arguments passed to or from other methods.</p></td>
-    </tr>
-    <tr>
-      <th>seed</th>
-      <td><p>Random seed. Default is <code>NULL</code>, which generates the seed from <code>R</code>. Set to <code>0</code> to ignore the <code>R</code> seed. The seed is used in case of ties in classification mode.</p></td>
-    </tr>
-    <tr>
-      <th>num.threads</th>
-      <td><p>Number of threads. Default is number of CPUs available.</p></td>
     </tr>
     </table>
 
@@ -194,7 +197,6 @@
     <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
 
     <p>For <code>type = 'response'</code> (the default), the predicted classes (classification), predicted numeric values (regression), predicted probabilities (probability estimation) or survival probabilities (survival) are returned.</p>
-
 <p>For classification and <code>predict.all = TRUE</code>, a factor levels are returned as numerics.
 To retrieve the corresponding factor levels, use <code>rf$forest$levels</code>, if <code>rf</code> is the ranger object.</p>
     <h2 class="hasAnchor" id="references"><a class="anchor" href="#references"></a>References</h2>
@@ -207,7 +209,7 @@ To retrieve the corresponding factor levels, use <code>rf$forest$levels</code>, 
 
     <h2 class="hasAnchor" id="see-also"><a class="anchor" href="#see-also"></a>See also</h2>
 
-    <div class='dont-index'><p><code>ranger</code></p></div>
+    <div class='dont-index'><p><code>ranger()</code></p></div>
     <h2 class="hasAnchor" id="author"><a class="anchor" href="#author"></a>Author</h2>
 
     <p>Marvin N. Wright</p>

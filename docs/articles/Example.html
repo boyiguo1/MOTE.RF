@@ -31,7 +31,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">MOTE.RF</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.2.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.3.0.9000</span>
       </span>
     </div>
 
@@ -115,8 +115,8 @@
 
 
 <span class="co"># scaling test.dat</span>
-<span class="co"># test.dat &lt;- sim.dat$test</span>
-<span class="co"># test.x.b &lt;- test.dat$x.b</span>
+<span class="va">test.dat</span> <span class="op">&lt;-</span> <span class="va">sim.dat</span><span class="op">$</span><span class="va">test</span>
+<span class="va">test.x.b</span> <span class="op">&lt;-</span> <span class="va">test.dat</span><span class="op">$</span><span class="va">x.b</span>
 <span class="co"># true.trt.diff &lt;- test.dat$y.e.1 - test.dat$y.e.2</span></code></pre></div>
 </div>
 <div id="handling-of-discrete-covariates" class="section level2">
@@ -131,11 +131,19 @@
 <h2 class="hasAnchor">
 <a href="#random-forest-fitting" class="anchor"></a>Random Forest Fitting</h2>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="co"># extreme random forest</span>
-<span class="va">RF.mdl</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/MOTE.html">MOTE</a></span><span class="op">(</span>x.b <span class="op">=</span> <span class="va">x.b</span>, x.e <span class="op">=</span> <span class="va">x.e</span>,
-               treat <span class="op">=</span> <span class="va">treat</span>,
-               y.b <span class="op">=</span> <span class="va">y.b</span>, y.e <span class="op">=</span> <span class="va">y.e</span>,
-               sample.fraction <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html">rep</a></span><span class="op">(</span><span class="fl">0.8</span>,<span class="fl">2</span><span class="op">)</span><span class="op">)</span></code></pre></div>
+<code class="sourceCode R"> <span class="va">RF.mdl</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/MOTE.html">MOTE</a></span><span class="op">(</span>x.b <span class="op">=</span> <span class="va">x.b</span>, x.e <span class="op">=</span> <span class="va">x.e</span>,
+                treat <span class="op">=</span> <span class="va">treat</span>,
+                y.b <span class="op">=</span> <span class="va">y.b</span>, y.e <span class="op">=</span> <span class="va">y.e</span>,
+                <span class="co"># replace=F,</span>
+                num.trees <span class="op">=</span> <span class="fl">2</span>,
+                num.random.splits <span class="op">=</span> <span class="fl">100</span>,
+                <span class="co"># max.depth=2,</span>
+                sample.fraction <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html">rep</a></span><span class="op">(</span><span class="fl">0.8</span>,<span class="fl">2</span><span class="op">)</span>,
+                num.threads <span class="op">=</span> <span class="fl">1</span>,
+                verbose<span class="op">=</span><span class="cn">T</span><span class="op">)</span>
+
+
+<span class="fu"><a href="https://rdrr.io/r/stats/predict.html">predict</a></span> <span class="op">(</span><span class="va">RF.mdl</span>, <span class="va">test.x.b</span><span class="op">)</span></code></pre></div>
 </div>
   </div>
 

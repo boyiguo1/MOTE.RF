@@ -72,7 +72,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">MOTE.RF</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.2.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.3.0.9000</span>
       </span>
     </div>
 
@@ -135,10 +135,6 @@
   data <span class='op'>=</span> <span class='cn'>NULL</span>,
   predict.all <span class='op'>=</span> <span class='cn'>FALSE</span>,
   num.trees <span class='op'>=</span> <span class='va'>object</span><span class='op'>$</span><span class='va'>num.trees</span>,
-  type <span class='op'>=</span> <span class='st'>"response"</span>,
-  se.method <span class='op'>=</span> <span class='st'>"infjack"</span>,
-  quantiles <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='fl'>0.1</span>, <span class='fl'>0.5</span>, <span class='fl'>0.9</span><span class='op'>)</span>,
-  what <span class='op'>=</span> <span class='cn'>NULL</span>,
   seed <span class='op'>=</span> <span class='cn'>NULL</span>,
   num.threads <span class='op'>=</span> <span class='cn'>NULL</span>,
   verbose <span class='op'>=</span> <span class='cn'>TRUE</span>,
@@ -165,22 +161,6 @@
       <td><p>Number of trees used for prediction. The first <code>num.trees</code> in the forest are used.</p></td>
     </tr>
     <tr>
-      <th>type</th>
-      <td><p>Type of prediction. One of 'response', 'se', 'terminalNodes', 'quantiles' with default 'response'. See below for details.</p></td>
-    </tr>
-    <tr>
-      <th>se.method</th>
-      <td><p>Method to compute standard errors. One of 'jack', 'infjack' with default 'infjack'. Only applicable if type = 'se'. See below for details.</p></td>
-    </tr>
-    <tr>
-      <th>quantiles</th>
-      <td><p>Vector of quantiles for quantile prediction. Set <code>type = 'quantiles'</code> to use.</p></td>
-    </tr>
-    <tr>
-      <th>what</th>
-      <td><p>User specified function for quantile prediction used instead of <code>quantile</code>. Must return numeric vector, see examples.</p></td>
-    </tr>
-    <tr>
       <th>seed</th>
       <td><p>Random seed. Default is <code>NULL</code>, which generates the seed from <code>R</code>. Set to <code>0</code> to ignore the <code>R</code> seed. The seed is used in case of ties in classification mode.</p></td>
     </tr>
@@ -195,6 +175,22 @@
     <tr>
       <th>...</th>
       <td><p>further arguments passed to or from other methods.</p></td>
+    </tr>
+    <tr>
+      <th>type</th>
+      <td><p>Type of prediction. One of 'response', 'se', 'terminalNodes', 'quantiles' with default 'response'. See below for details.</p></td>
+    </tr>
+    <tr>
+      <th>se.method</th>
+      <td><p>Method to compute standard errors. One of 'jack', 'infjack' with default 'infjack'. Only applicable if type = 'se'. See below for details.</p></td>
+    </tr>
+    <tr>
+      <th>quantiles</th>
+      <td><p>Vector of quantiles for quantile prediction. Set <code>type = 'quantiles'</code> to use.</p></td>
+    </tr>
+    <tr>
+      <th>what</th>
+      <td><p>User specified function for quantile prediction used instead of <code>quantile</code>. Must return numeric vector, see examples.</p></td>
     </tr>
     </table>
 
@@ -214,7 +210,7 @@
 
     <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
 
-    <p>For <code>type = 'response'</code> (the default), the predicted classes (classification), predicted numeric values (regression), predicted probabilities (probability estimation) or survival probabilities (survival) are returned. 
+    <p>For <code>type = 'response'</code> (the default), the predicted classes (classification), predicted numeric values (regression), predicted probabilities (probability estimation) or survival probabilities (survival) are returned.
 For <code>type = 'se'</code>, the standard error of the predictions are returned (regression only). The jackknife-after-bootstrap or infinitesimal jackknife for bagging is used to estimate the standard errors based on out-of-bag predictions. See Wager et al. (2014) for details.
 For <code>type = 'terminalNodes'</code>, the IDs of the terminal node in each tree for each observation in the given dataset are returned.
 For <code>type = 'quantiles'</code>, the selected quantiles for each observation are estimated. See Meinshausen (2006) for details.</p>
@@ -232,32 +228,16 @@ To retrieve the corresponding factor levels, use <code>rf$forest$levels</code>, 
 
     <h2 class="hasAnchor" id="see-also"><a class="anchor" href="#see-also"></a>See also</h2>
 
-    <div class='dont-index'><p><code>ranger</code></p></div>
+    <div class='dont-index'><p><code>ranger()</code></p></div>
     <h2 class="hasAnchor" id="author"><a class="anchor" href="#author"></a>Author</h2>
 
     <p>Marvin N. Wright</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='co'>## Classification forest</span>
-<span class='fu'>ranger</span><span class='op'>(</span><span class='va'>Species</span> <span class='op'>~</span> <span class='va'>.</span>, data <span class='op'>=</span> <span class='va'>iris</span><span class='op'>)</span>
-</div><div class='output co'>#&gt; <span class='error'>Error in ranger(Species ~ ., data = iris): could not find function "ranger"</span></div><div class='input'><span class='va'>train.idx</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/sample.html'>sample</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/nrow.html'>nrow</a></span><span class='op'>(</span><span class='va'>iris</span><span class='op'>)</span>, <span class='fl'>2</span><span class='op'>/</span><span class='fl'>3</span> <span class='op'>*</span> <span class='fu'><a href='https://rdrr.io/r/base/nrow.html'>nrow</a></span><span class='op'>(</span><span class='va'>iris</span><span class='op'>)</span><span class='op'>)</span>
-<span class='va'>iris.train</span> <span class='op'>&lt;-</span> <span class='va'>iris</span><span class='op'>[</span><span class='va'>train.idx</span>, <span class='op'>]</span>
-<span class='va'>iris.test</span> <span class='op'>&lt;-</span> <span class='va'>iris</span><span class='op'>[</span><span class='op'>-</span><span class='va'>train.idx</span>, <span class='op'>]</span>
-<span class='va'>rg.iris</span> <span class='op'>&lt;-</span> <span class='fu'>ranger</span><span class='op'>(</span><span class='va'>Species</span> <span class='op'>~</span> <span class='va'>.</span>, data <span class='op'>=</span> <span class='va'>iris.train</span><span class='op'>)</span>
-</div><div class='output co'>#&gt; <span class='error'>Error in ranger(Species ~ ., data = iris.train): could not find function "ranger"</span></div><div class='input'><span class='va'>pred.iris</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/stats/predict.html'>predict</a></span><span class='op'>(</span><span class='va'>rg.iris</span>, data <span class='op'>=</span> <span class='va'>iris.test</span><span class='op'>)</span>
-</div><div class='output co'>#&gt; <span class='error'>Error in predict(rg.iris, data = iris.test): object 'rg.iris' not found</span></div><div class='input'><span class='fu'><a href='https://rdrr.io/r/base/table.html'>table</a></span><span class='op'>(</span><span class='va'>iris.test</span><span class='op'>$</span><span class='va'>Species</span>, <span class='va'>pred.iris</span><span class='op'>$</span><span class='va'>predictions</span><span class='op'>)</span>
-</div><div class='output co'>#&gt; <span class='error'>Error in table(iris.test$Species, pred.iris$predictions): object 'pred.iris' not found</span></div><div class='input'>
-<span class='co'>## Quantile regression forest</span>
-<span class='va'>rf</span> <span class='op'>&lt;-</span> <span class='fu'>ranger</span><span class='op'>(</span><span class='va'>mpg</span> <span class='op'>~</span> <span class='va'>.</span>, <span class='va'>mtcars</span><span class='op'>[</span><span class='fl'>1</span><span class='op'>:</span><span class='fl'>26</span>, <span class='op'>]</span>, quantreg <span class='op'>=</span> <span class='cn'>TRUE</span><span class='op'>)</span>
-</div><div class='output co'>#&gt; <span class='error'>Error in ranger(mpg ~ ., mtcars[1:26, ], quantreg = TRUE): could not find function "ranger"</span></div><div class='input'><span class='va'>pred</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/stats/predict.html'>predict</a></span><span class='op'>(</span><span class='va'>rf</span>, <span class='va'>mtcars</span><span class='op'>[</span><span class='fl'>27</span><span class='op'>:</span><span class='fl'>32</span>, <span class='op'>]</span>, type <span class='op'>=</span> <span class='st'>"quantiles"</span>, quantiles <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='fl'>0.1</span>, <span class='fl'>0.5</span>, <span class='fl'>0.9</span><span class='op'>)</span><span class='op'>)</span>
-</div><div class='output co'>#&gt; <span class='error'>Error in UseMethod("predict"): no applicable method for 'predict' applied to an object of class "function"</span></div><div class='input'><span class='va'>pred</span><span class='op'>$</span><span class='va'>predictions</span>
-</div><div class='output co'>#&gt; <span class='error'>Error in eval(expr, envir, enclos): object 'pred' not found</span></div><div class='input'>
-<span class='co'>## Quantile regression forest with user-specified function</span>
-<span class='va'>rf</span> <span class='op'>&lt;-</span> <span class='fu'>ranger</span><span class='op'>(</span><span class='va'>mpg</span> <span class='op'>~</span> <span class='va'>.</span>, <span class='va'>mtcars</span><span class='op'>[</span><span class='fl'>1</span><span class='op'>:</span><span class='fl'>26</span>, <span class='op'>]</span>, quantreg <span class='op'>=</span> <span class='cn'>TRUE</span><span class='op'>)</span>
-</div><div class='output co'>#&gt; <span class='error'>Error in ranger(mpg ~ ., mtcars[1:26, ], quantreg = TRUE): could not find function "ranger"</span></div><div class='input'><span class='va'>pred</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/stats/predict.html'>predict</a></span><span class='op'>(</span><span class='va'>rf</span>, <span class='va'>mtcars</span><span class='op'>[</span><span class='fl'>27</span><span class='op'>:</span><span class='fl'>32</span>, <span class='op'>]</span>, type <span class='op'>=</span> <span class='st'>"quantiles"</span>, 
-                what <span class='op'>=</span> <span class='kw'>function</span><span class='op'>(</span><span class='va'>x</span><span class='op'>)</span> <span class='fu'><a href='https://rdrr.io/r/base/sample.html'>sample</a></span><span class='op'>(</span><span class='va'>x</span>, <span class='fl'>10</span>, replace <span class='op'>=</span> <span class='cn'>TRUE</span><span class='op'>)</span><span class='op'>)</span>
-</div><div class='output co'>#&gt; <span class='error'>Error in UseMethod("predict"): no applicable method for 'predict' applied to an object of class "function"</span></div><div class='input'><span class='va'>pred</span><span class='op'>$</span><span class='va'>predictions</span>
-</div><div class='output co'>#&gt; <span class='error'>Error in eval(expr, envir, enclos): object 'pred' not found</span></div><div class='input'>
+    <pre class="examples"><div class='input'><span class='co'># TODO: add example here</span>
+<span class='va'>a</span> <span class='op'>&lt;-</span> <span class='fl'>1</span>
+
+
 </div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">

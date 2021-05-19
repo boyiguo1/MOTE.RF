@@ -23,7 +23,7 @@ Imports:
     Rcpp (>= 1.0.5),
     lifecycle
 LinkingTo: Rcpp, RcppArmadillo
-URL: https://github.com/boyiguo1/MOTE.RF
+URL: https://boyiguo1.github.io/MOTE.RF, https://github.com/boyiguo1/MOTE.RF
 BugReports: https://github.com/boyiguo1/MOTE.RF/issues
 RoxygenNote: 7.1.1
 Suggests: 
