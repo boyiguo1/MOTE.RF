@@ -42,22 +42,22 @@
 }
 \value{
 Object of class \code{ranger.prediction} with elements
-  \tabular{ll}{
-      \code{predictions}    \tab Predicted classes/values (only for classification and regression)  \cr
-      \code{unique.death.times} \tab Unique death times (only for survival). \cr
-      \code{chf} \tab Estimated cumulative hazard function for each sample (only for survival). \cr
-      \code{survival} \tab Estimated survival function for each sample (only for survival). \cr
-      \code{num.trees}   \tab Number of trees. \cr
-      \code{num.independent.variables} \tab Number of independent variables. \cr
-      \code{treetype}    \tab Type of forest/tree. Classification, regression or survival. \cr
-      \code{num.samples}     \tab Number of samples.
-  }
+\tabular{ll}{
+\code{predictions}    \tab Predicted classes/values (only for classification and regression)  \cr
+\code{unique.death.times} \tab Unique death times (only for survival). \cr
+\code{chf} \tab Estimated cumulative hazard function for each sample (only for survival). \cr
+\code{survival} \tab Estimated survival function for each sample (only for survival). \cr
+\code{num.trees}   \tab Number of trees. \cr
+\code{num.independent.variables} \tab Number of independent variables. \cr
+\code{treetype}    \tab Type of forest/tree. Classification, regression or survival. \cr
+\code{num.samples}     \tab Number of samples.
+}
 }
 \description{
 Prediction with new data and a saved forest from Ranger.
 }
 \details{
-For \code{type = 'response'} (the default), the predicted classes (classification), predicted numeric values (regression), predicted probabilities (probability estimation) or survival probabilities (survival) are returned. 
+For \code{type = 'response'} (the default), the predicted classes (classification), predicted numeric values (regression), predicted probabilities (probability estimation) or survival probabilities (survival) are returned.
 For \code{type = 'se'}, the standard error of the predictions are returned (regression only). The jackknife-after-bootstrap or infinitesimal jackknife for bagging is used to estimate the standard errors based on out-of-bag predictions. See Wager et al. (2014) for details.
 For \code{type = 'terminalNodes'}, the IDs of the terminal node in each tree for each observation in the given dataset are returned.
 For \code{type = 'quantiles'}, the selected quantiles for each observation are estimated. See Meinshausen (2006) for details.
@@ -75,13 +75,13 @@ a <- 1
 }
 \references{
 \itemize{
-  \item Wright, M. N. & Ziegler, A. (2017). ranger: A Fast Implementation of Random Forests for High Dimensional Data in C++ and R. J Stat Softw 77:1-17. \url{https://doi.org/10.18637/jss.v077.i01}.
-  \item Wager, S., Hastie T., & Efron, B. (2014). Confidence Intervals for Random Forests: The Jackknife and the Infinitesimal Jackknife. J Mach Learn Res 15:1625-1651. \url{http://jmlr.org/papers/v15/wager14a.html}.
-  \item Meinshausen (2006). Quantile Regression Forests. J Mach Learn Res 7:983-999. \url{http://www.jmlr.org/papers/v7/meinshausen06a.html}.  
-  }
+\item Wright, M. N. & Ziegler, A. (2017). ranger: A Fast Implementation of Random Forests for High Dimensional Data in C++ and R. J Stat Softw 77:1-17. \url{https://doi.org/10.18637/jss.v077.i01}.
+\item Wager, S., Hastie T., & Efron, B. (2014). Confidence Intervals for Random Forests: The Jackknife and the Infinitesimal Jackknife. J Mach Learn Res 15:1625-1651. \url{http://jmlr.org/papers/v15/wager14a.html}.
+\item Meinshausen (2006). Quantile Regression Forests. J Mach Learn Res 7:983-999. \url{http://www.jmlr.org/papers/v7/meinshausen06a.html}.
+}
 }
 \seealso{
-\code{\link{ranger}}
+\code{\link[=ranger]{ranger()}}
 }
 \author{
 Marvin N. Wright

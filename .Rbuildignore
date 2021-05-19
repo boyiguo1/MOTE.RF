@@ -6,3 +6,5 @@
 ^Archived_Files$
 ^.*_backup$
 ^test_example.R$
+^\.github$
+^README\.Rmd$

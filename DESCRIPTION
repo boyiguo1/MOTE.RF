@@ -20,7 +20,8 @@ Depends: R (>= 3.6.0)
 Imports: 
     Matrix,
     MASS,
-    Rcpp (>= 1.0.5)
+    Rcpp (>= 1.0.5),
+    lifecycle
 LinkingTo: Rcpp, RcppArmadillo
 URL: https://github.com/boyiguo1/MOTE.RF
 BugReports: https://github.com/boyiguo1/MOTE.RF/issues
@@ -30,3 +31,4 @@ Suggests:
     rmarkdown
 VignetteBuilder: knitr
 Encoding: UTF-8
+Roxygen: list(markdown = TRUE)

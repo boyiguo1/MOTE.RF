@@ -1,5 +1,7 @@
 #' Simulate MOTTE formated data
 #'
+#' `r lifecycle::badge('experimental')`
+#'
 #' @param n.train An integer value, sample size for training data
 ##' @param n.test An integer value, sample size for testing data
 ##' @param p An integer value, the dimensionality of covaraites (X)

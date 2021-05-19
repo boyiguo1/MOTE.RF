@@ -19,7 +19,7 @@ Variable importance measures.
 Extract variable importance of MOTE object.
 }
 \seealso{
-\code{\link{MOTE}}
+\code{\link[=MOTE]{MOTE()}}
 }
 \author{
 Marvin N. Wright

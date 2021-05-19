@@ -12,10 +12,12 @@
 ##'
 ##' Forests of extremely randomized trees (Geurts et al. 2006) can be grown.
 ##'
+##' `r lifecycle::badge('experimental')`
+##'
 ##' @details 
 ##'
 ##' Note that: 
-##' * nodes with size smaller than \code{min.node.size} can occur, as in original Random Forests.
+##' * nodes with size smaller than `min.node.size` can occur, as in original Random Forests.
 ##' * The mtry variable that randomly selected variables doesn't exist in our framework, as we are using oblique splitting rules.
 ##' * For factor covriates, a reference coding design matrix will be created accordingly. TODO: it is possible to extend this later by extending to ordered factors.
 ##' * The importance of variables/features are calculated by accumulating the coefficients in the oblique splitting rules weighted by node sample size.
@@ -23,23 +25,23 @@
 ##' 
 ##' For a large number of variables and data frames as input data the formula interface can be slow or impossible to use.
 ##' TODO: need improve this part a little bit
-##' Alternatively \code{dependent.variable.name} and \code{status.variable.name} for treatment category or \code{x} and \code{y} can be used.
-##' Use \code{x} and \code{y} with a matrix for \code{x} to avoid conversions and save memory.
+##' Alternatively `dependent.variable.name` and `status.variable.name` for treatment category or `x` and `y` can be used.
+##' Use `x` and `y` with a matrix for `x` to avoid conversions and save memory.
 ##' 
 ##' TODO: 
 ##' Since our algorithm is oriented to analyze microbiome data, we can directly use phyloseq object.
 ##' Case weights is not supported temporarily
 ##' 
-##' See \url{https://github.com/boyiguo1/MOTE.RF} for the development version.
+##' See <https://github.com/boyiguo1/MOTE.RF> for the development version.
 ##' 
 ##' With recent R versions, multithreading on Windows platforms should just work. 
 ##' If you compile yourself, the new RTools toolchain is required.
 ##' 
 ##' @title MOTE
-##' @param formula Object of class \code{formula} or \code{character} describing the model to fit. Interaction terms supported only for numerical variables.
-##' @param data Training data of class \code{data.frame}, \code{matrix}, \code{dgCMatrix} (Matrix).
+##' @param formula Object of class `formula` or `character` describing the model to fit. Interaction terms supported only for numerical variables.
+##' @param data Training data of class `data.frame`, `matrix`, `dgCMatrix` (Matrix).
 ##' @param num.trees Number of trees.
-##' @param write.forest Save \code{MOTE.forest} object, required for prediction. Set to \code{FALSE} to reduce memory usage if no prediction intended.
+##' @param write.forest Save `MOTE.forest` object, required for prediction. Set to `FALSE` to reduce memory usage if no prediction intended.
 ##' @param min.node.size Minimal node size. Default 1 for classification, 5 for regression, 3 for survival, and 10 for probability.
 ##' @param max.depth Maximal tree depth. A value of NULL or 0 (the default) corresponds to unlimited depth, 1 to tree stumps (1 split per tree).
 ##' @param replace Sample with replacement. 
@@ -51,30 +53,30 @@
 ##' @param keep.inbag Save how often observations are in-bag in each tree. 
 ##' @param inbag Manually set observations per tree. List of size num.trees, containing inbag counts for each observation. Can be used for stratified sampling.
 ##' @param holdout Hold-out mode. Hold-out all samples with case weight 0 and use these for variable importance and prediction error.
-##' @param oob.error Compute OOB prediction error. Set to \code{FALSE} to save computation time, e.g. for large survival forests.
+##' @param oob.error Compute OOB prediction error. Set to `FALSE` to save computation time, e.g. for large survival forests.
 ##' @param num.threads Number of threads. Default is number of CPUs available.
 ##' @param save.memory Use memory saving (but slower) splitting mode. No effect for survival and GWAS data. Warning: This option slows down the tree growing, use only if you encounter memory problems.
 ##' @param verbose Show computation status and estimated runtime.
-##' @param seed Random seed. Default is \code{NULL}, which generates the seed from \code{R}. Set to \code{0} to ignore the \code{R} seed. 
+##' @param seed Random seed. Default is `NULL`, which generates the seed from `R`. Set to `0` to ignore the `R` seed. 
 ##' @param dependent.variable.name Name of dependent variable, needed if no formula given. For survival forests this is the time variable.
 ##' @param trt.variable.name Name of treatment variable. Treatment variable should be a factor variable
 ##' @param x Predictor data (independent variables), alternative interface to data with formula or dependent.variable.name.
-##' @param y Response vector (dependent variable), alternative interface to data with formula or dependent.variable.name. For survival use a \code{Surv()} object or a matrix with time and status.
+##' @param y Response vector (dependent variable), alternative interface to data with formula or dependent.variable.name. For survival use a `Surv()` object or a matrix with time and status.
 ##' @param ... Further arguments passed to or from other methods (currently ignored).
-##' @return Object of class \code{ranger} with elements
-##'   \item{\code{forest}}{Saved forest (If write.forest set to TRUE). Note that the variable IDs in the \code{split.varIDs} object do not necessarily represent the column number in R.}
-##'   \item{\code{predictions}}{Predicted classes/values, based on out of bag samples (classification and regression only).}
-##'   \item{\code{variable.importance}}{Variable importance for each independent variable.}
-##'   \item{\code{prediction.error}}{Overall out of bag prediction error. For classification this is the fraction of missclassified samples, for probability estimation the Brier score, for regression the mean squared error and for survival one minus Harrell's C-index.}
-##'   \item{\code{r.squared}}{R squared. Also called explained variance or coefficient of determination (regression only). Computed on out of bag data.}
-##'   \item{\code{confusion.matrix}}{Contingency table for classes and predictions based on out of bag samples (classification only).}
-##'   \item{\code{call}}{Function call.}
-##'   \item{\code{num.trees}}{Number of trees.}
-##'   \item{\code{num.independent.variables}}{Number of independent variables.}
-##'   \item{\code{mtry}}{Value of mtry used.}
-##'   \item{\code{min.node.size}}{Value of minimal node size used.}
-##'   \item{\code{num.samples}}{Number of samples.}
-##'   \item{\code{inbag.counts}}{Number of times the observations are in-bag in the trees.}
+##' @return Object of class `ranger` with elements
+##'   \item{`forest`}{Saved forest (If write.forest set to TRUE). Note that the variable IDs in the `split.varIDs` object do not necessarily represent the column number in R.}
+##'   \item{`predictions`}{Predicted classes/values, based on out of bag samples (classification and regression only).}
+##'   \item{`variable.importance`}{Variable importance for each independent variable.}
+##'   \item{`prediction.error`}{Overall out of bag prediction error. For classification this is the fraction of missclassified samples, for probability estimation the Brier score, for regression the mean squared error and for survival one minus Harrell's C-index.}
+##'   \item{`r.squared`}{R squared. Also called explained variance or coefficient of determination (regression only). Computed on out of bag data.}
+##'   \item{`confusion.matrix`}{Contingency table for classes and predictions based on out of bag samples (classification only).}
+##'   \item{`call`}{Function call.}
+##'   \item{`num.trees`}{Number of trees.}
+##'   \item{`num.independent.variables`}{Number of independent variables.}
+##'   \item{`mtry`}{Value of mtry used.}
+##'   \item{`min.node.size`}{Value of minimal node size used.}
+##'   \item{`num.samples`}{Number of samples.}
+##'   \item{`inbag.counts`}{Number of times the observations are in-bag in the trees.}
 ##' @examples
 ##' set.seed(1)
 ##' 
@@ -93,9 +95,9 @@
 ##' @author Boyi Guo
 ##' @references
 ##' \itemize{
-##'   \item Guo et al. (Submitted). Estimating Heterogeneous Treatment Effect on Multivariate Responses using Random Forests. \url{https://doi.org/xxxx}.
+##'   \item Guo et al. (Submitted). Estimating Heterogeneous Treatment Effect on Multivariate Responses using Random Forests. <https://doi.org/xxxx>.
 ##'   }
-##' @seealso \code{\link{predict.MOTE}}
+##' @seealso [predict.MOTE()]
 ##' @useDynLib MOTE.RF, .registration = TRUE
 ##' @importFrom Rcpp evalCpp
 ##' @import stats 

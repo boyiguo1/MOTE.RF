@@ -83,19 +83,19 @@ MOTE(
 }
 \value{
 Object of class \code{ranger} with elements
-  \item{\code{forest}}{Saved forest (If write.forest set to TRUE). Note that the variable IDs in the \code{split.varIDs} object do not necessarily represent the column number in R.}
-  \item{\code{predictions}}{Predicted classes/values, based on out of bag samples (classification and regression only).}
-  \item{\code{variable.importance}}{Variable importance for each independent variable.}
-  \item{\code{prediction.error}}{Overall out of bag prediction error. For classification this is the fraction of missclassified samples, for probability estimation the Brier score, for regression the mean squared error and for survival one minus Harrell's C-index.}
-  \item{\code{r.squared}}{R squared. Also called explained variance or coefficient of determination (regression only). Computed on out of bag data.}
-  \item{\code{confusion.matrix}}{Contingency table for classes and predictions based on out of bag samples (classification only).}
-  \item{\code{call}}{Function call.}
-  \item{\code{num.trees}}{Number of trees.}
-  \item{\code{num.independent.variables}}{Number of independent variables.}
-  \item{\code{mtry}}{Value of mtry used.}
-  \item{\code{min.node.size}}{Value of minimal node size used.}
-  \item{\code{num.samples}}{Number of samples.}
-  \item{\code{inbag.counts}}{Number of times the observations are in-bag in the trees.}
+\item{\code{forest}}{Saved forest (If write.forest set to TRUE). Note that the variable IDs in the \code{split.varIDs} object do not necessarily represent the column number in R.}
+\item{\code{predictions}}{Predicted classes/values, based on out of bag samples (classification and regression only).}
+\item{\code{variable.importance}}{Variable importance for each independent variable.}
+\item{\code{prediction.error}}{Overall out of bag prediction error. For classification this is the fraction of missclassified samples, for probability estimation the Brier score, for regression the mean squared error and for survival one minus Harrell's C-index.}
+\item{\code{r.squared}}{R squared. Also called explained variance or coefficient of determination (regression only). Computed on out of bag data.}
+\item{\code{confusion.matrix}}{Contingency table for classes and predictions based on out of bag samples (classification only).}
+\item{\code{call}}{Function call.}
+\item{\code{num.trees}}{Number of trees.}
+\item{\code{num.independent.variables}}{Number of independent variables.}
+\item{\code{mtry}}{Value of mtry used.}
+\item{\code{min.node.size}}{Value of minimal node size used.}
+\item{\code{num.samples}}{Number of samples.}
+\item{\code{inbag.counts}}{Number of times the observations are in-bag in the trees.}
 }
 \description{
 MOTE is a fast implementation of MOTE RF (Guo et al. 2021), a random forest model that simultaneously estimates individualized treatment effects of multivariate outcomes.
@@ -103,27 +103,27 @@ MOTE is a fast implementation of MOTE RF (Guo et al. 2021), a random forest mode
 \details{
 Forests of extremely randomized trees (Geurts et al. 2006) can be grown.
 
-
-
-Note that: 
-* nodes with size smaller than \code{min.node.size} can occur, as in original Random Forests.
-* The mtry variable that randomly selected variables doesn't exist in our framework, as we are using oblique splitting rules.
-* For factor covriates, a reference coding design matrix will be created accordingly. TODO: it is possible to extend this later by extending to ordered factors.
-* The importance of variables/features are calculated by accumulating the coefficients in the oblique splitting rules weighted by node sample size.
-* The model yet to provide handling of missing value. Data containing missing value can promote computation error and warning.
+Note that:
+\itemize{
+\item nodes with size smaller than \code{min.node.size} can occur, as in original Random Forests.
+\item The mtry variable that randomly selected variables doesn't exist in our framework, as we are using oblique splitting rules.
+\item For factor covriates, a reference coding design matrix will be created accordingly. TODO: it is possible to extend this later by extending to ordered factors.
+\item The importance of variables/features are calculated by accumulating the coefficients in the oblique splitting rules weighted by node sample size.
+\item The model yet to provide handling of missing value. Data containing missing value can promote computation error and warning.
+}
 
 For a large number of variables and data frames as input data the formula interface can be slow or impossible to use.
 TODO: need improve this part a little bit
 Alternatively \code{dependent.variable.name} and \code{status.variable.name} for treatment category or \code{x} and \code{y} can be used.
 Use \code{x} and \code{y} with a matrix for \code{x} to avoid conversions and save memory.
 
-TODO: 
+TODO:
 Since our algorithm is oriented to analyze microbiome data, we can directly use phyloseq object.
 Case weights is not supported temporarily
 
 See \url{https://github.com/boyiguo1/MOTE.RF} for the development version.
 
-With recent R versions, multithreading on Windows platforms should just work. 
+With recent R versions, multithreading on Windows platforms should just work.
 If you compile yourself, the new RTools toolchain is required.
 }
 \examples{
@@ -144,11 +144,11 @@ sim.dat <- sim_MOTE_data(B = B, Z = Z)
 }
 \references{
 \itemize{
-  \item Guo et al. (Submitted). Estimating Heterogeneous Treatment Effect on Multivariate Responses using Random Forests. \url{https://doi.org/xxxx}.
-  }
+\item Guo et al. (Submitted). Estimating Heterogeneous Treatment Effect on Multivariate Responses using Random Forests. \url{https://doi.org/xxxx}.
+}
 }
 \seealso{
-\code{\link{predict.MOTE}}
+\code{\link[=predict.MOTE]{predict.MOTE()}}
 }
 \author{
 Boyi Guo

@@ -28,38 +28,40 @@
 
 ##' Prediction with new data and a saved forest from Ranger.
 ##' 
-##' For \code{type = 'response'} (the default), the predicted classes (classification), predicted numeric values (regression), predicted probabilities (probability estimation) or survival probabilities (survival) are returned. 
+##' `r lifecycle::badge('experimental')`
+##' 
+##' For `type = 'response'` (the default), the predicted classes (classification), predicted numeric values (regression), predicted probabilities (probability estimation) or survival probabilities (survival) are returned. 
 ##' 
 ##' 
-##' For classification and \code{predict.all = TRUE}, a factor levels are returned as numerics.
-##' To retrieve the corresponding factor levels, use \code{rf$forest$levels}, if \code{rf} is the ranger object.
+##' For classification and `predict.all = TRUE`, a factor levels are returned as numerics.
+##' To retrieve the corresponding factor levels, use `rf$forest$levels`, if `rf` is the ranger object.
 ##'
 ##' @title Ranger prediction
-##' @param object Ranger \code{ranger.forest} object.
-##' @param data New test data of class \code{data.frame}. 
-##' @param num.trees Number of trees used for prediction. The first \code{num.trees} in the forest are used.
-##' @param seed Random seed. Default is \code{NULL}, which generates the seed from \code{R}. Set to \code{0} to ignore the \code{R} seed. The seed is used in case of ties in classification mode.
+##' @param object Ranger `ranger.forest` object.
+##' @param data New test data of class `data.frame`. 
+##' @param num.trees Number of trees used for prediction. The first `num.trees` in the forest are used.
+##' @param seed Random seed. Default is `NULL`, which generates the seed from `R`. Set to `0` to ignore the `R` seed. The seed is used in case of ties in classification mode.
 ##' @param num.threads Number of threads. Default is number of CPUs available.
 ##' @param verbose Verbose output on or off.
 ##' @param inbag.counts Number of times the observations are in-bag in the trees.
 ##' @param ... further arguments passed to or from other methods.
-##' @return Object of class \code{ranger.prediction} with elements
+##' @return Object of class `ranger.prediction` with elements
 ##'   \tabular{ll}{
-##'       \code{predictions}    \tab Predicted classes/values (only for classification and regression)  \cr
-##'       \code{unique.death.times} \tab Unique death times (only for survival). \cr
-##'       \code{chf} \tab Estimated cumulative hazard function for each sample (only for survival). \cr
-##'       \code{survival} \tab Estimated survival function for each sample (only for survival). \cr
-##'       \code{num.trees}   \tab Number of trees. \cr
-##'       \code{num.independent.variables} \tab Number of independent variables. \cr
-##'       \code{treetype}    \tab Type of forest/tree. Classification, regression or survival. \cr
-##'       \code{num.samples}     \tab Number of samples.
+##'       `predictions`    \tab Predicted classes/values (only for classification and regression)  \cr
+##'       `unique.death.times` \tab Unique death times (only for survival). \cr
+##'       `chf` \tab Estimated cumulative hazard function for each sample (only for survival). \cr
+##'       `survival` \tab Estimated survival function for each sample (only for survival). \cr
+##'       `num.trees`   \tab Number of trees. \cr
+##'       `num.independent.variables` \tab Number of independent variables. \cr
+##'       `treetype`    \tab Type of forest/tree. Classification, regression or survival. \cr
+##'       `num.samples`     \tab Number of samples.
 ##'   }
 ##' @references
 ##' \itemize{
-##'   \item Wright, M. N. & Ziegler, A. (2017). ranger: A Fast Implementation of Random Forests for High Dimensional Data in C++ and R. J Stat Softw 77:1-17. \url{https://doi.org/10.18637/jss.v077.i01}.
-##'   \item Wager, S., Hastie T., & Efron, B. (2014). Confidence Intervals for Random Forests: The Jackknife and the Infinitesimal Jackknife. J Mach Learn Res 15:1625-1651. \url{http://jmlr.org/papers/v15/wager14a.html}.
+##'   \item Wright, M. N. & Ziegler, A. (2017). ranger: A Fast Implementation of Random Forests for High Dimensional Data in C++ and R. J Stat Softw 77:1-17. <https://doi.org/10.18637/jss.v077.i01>.
+##'   \item Wager, S., Hastie T., & Efron, B. (2014). Confidence Intervals for Random Forests: The Jackknife and the Infinitesimal Jackknife. J Mach Learn Res 15:1625-1651. <http://jmlr.org/papers/v15/wager14a.html>.
 ##'   }
-##' @seealso \code{\link{ranger}}
+##' @seealso [ranger()]
 ##' @author Marvin N. Wright
 ##' @importFrom Matrix Matrix
 ##' @export
@@ -394,39 +396,41 @@ predict.MOTE.forest <- function(object, data, predict.all = FALSE,
 
 ##' Prediction with new data and a saved forest from Ranger.
 ##' 
-##' For \code{type = 'response'} (the default), the predicted classes (classification), predicted numeric values (regression), predicted probabilities (probability estimation) or survival probabilities (survival) are returned. 
-##' For \code{type = 'se'}, the standard error of the predictions are returned (regression only). The jackknife-after-bootstrap or infinitesimal jackknife for bagging is used to estimate the standard errors based on out-of-bag predictions. See Wager et al. (2014) for details.
-##' For \code{type = 'terminalNodes'}, the IDs of the terminal node in each tree for each observation in the given dataset are returned.
-##' For \code{type = 'quantiles'}, the selected quantiles for each observation are estimated. See Meinshausen (2006) for details.
+##' `r lifecycle::badge('experimental')`
 ##' 
-##' If \code{type = 'se'} is selected, the method to estimate the variances can be chosen with \code{se.method}. Set \code{se.method = 'jack'} for jackknife-after-bootstrap and \code{se.method = 'infjack'} for the infinitesimal jackknife for bagging.
+##' For `type = 'response'` (the default), the predicted classes (classification), predicted numeric values (regression), predicted probabilities (probability estimation) or survival probabilities (survival) are returned. 
+##' For `type = 'se'`, the standard error of the predictions are returned (regression only). The jackknife-after-bootstrap or infinitesimal jackknife for bagging is used to estimate the standard errors based on out-of-bag predictions. See Wager et al. (2014) for details.
+##' For `type = 'terminalNodes'`, the IDs of the terminal node in each tree for each observation in the given dataset are returned.
+##' For `type = 'quantiles'`, the selected quantiles for each observation are estimated. See Meinshausen (2006) for details.
 ##' 
-##' For classification and \code{predict.all = TRUE}, a factor levels are returned as numerics.
-##' To retrieve the corresponding factor levels, use \code{rf$forest$levels}, if \code{rf} is the ranger object.
+##' If `type = 'se'` is selected, the method to estimate the variances can be chosen with `se.method`. Set `se.method = 'jack'` for jackknife-after-bootstrap and `se.method = 'infjack'` for the infinitesimal jackknife for bagging.
+##' 
+##' For classification and `predict.all = TRUE`, a factor levels are returned as numerics.
+##' To retrieve the corresponding factor levels, use `rf$forest$levels`, if `rf` is the ranger object.
 ##'
 ##' @title Ranger prediction
-##' @param object Ranger \code{ranger} object.
-##' @param data New test data of class \code{data.frame} or \code{gwaa.data} (GenABEL).
+##' @param object Ranger `ranger` object.
+##' @param data New test data of class `data.frame` or `gwaa.data` (GenABEL).
 ##' @param predict.all Return individual predictions for each tree instead of aggregated predictions for all trees. Return a matrix (sample x tree) for classification and regression, a 3d array for probability estimation (sample x class x tree) and survival (sample x time x tree).
-##' @param num.trees Number of trees used for prediction. The first \code{num.trees} in the forest are used.
+##' @param num.trees Number of trees used for prediction. The first `num.trees` in the forest are used.
 ##' @param type Type of prediction. One of 'response', 'se', 'terminalNodes', 'quantiles' with default 'response'. See below for details.
 ##' @param se.method Method to compute standard errors. One of 'jack', 'infjack' with default 'infjack'. Only applicable if type = 'se'. See below for details.
-##' @param quantiles Vector of quantiles for quantile prediction. Set \code{type = 'quantiles'} to use.
-##' @param what User specified function for quantile prediction used instead of \code{quantile}. Must return numeric vector, see examples.
-##' @param seed Random seed. Default is \code{NULL}, which generates the seed from \code{R}. Set to \code{0} to ignore the \code{R} seed. The seed is used in case of ties in classification mode.
+##' @param quantiles Vector of quantiles for quantile prediction. Set `type = 'quantiles'` to use.
+##' @param what User specified function for quantile prediction used instead of `quantile`. Must return numeric vector, see examples.
+##' @param seed Random seed. Default is `NULL`, which generates the seed from `R`. Set to `0` to ignore the `R` seed. The seed is used in case of ties in classification mode.
 ##' @param num.threads Number of threads. Default is number of CPUs available.
 ##' @param verbose Verbose output on or off.
 ##' @param ... further arguments passed to or from other methods.
-##' @return Object of class \code{ranger.prediction} with elements
+##' @return Object of class `ranger.prediction` with elements
 ##'   \tabular{ll}{
-##'       \code{predictions}    \tab Predicted classes/values (only for classification and regression)  \cr
-##'       \code{unique.death.times} \tab Unique death times (only for survival). \cr
-##'       \code{chf} \tab Estimated cumulative hazard function for each sample (only for survival). \cr
-##'       \code{survival} \tab Estimated survival function for each sample (only for survival). \cr
-##'       \code{num.trees}   \tab Number of trees. \cr
-##'       \code{num.independent.variables} \tab Number of independent variables. \cr
-##'       \code{treetype}    \tab Type of forest/tree. Classification, regression or survival. \cr
-##'       \code{num.samples}     \tab Number of samples.
+##'       `predictions`    \tab Predicted classes/values (only for classification and regression)  \cr
+##'       `unique.death.times` \tab Unique death times (only for survival). \cr
+##'       `chf` \tab Estimated cumulative hazard function for each sample (only for survival). \cr
+##'       `survival` \tab Estimated survival function for each sample (only for survival). \cr
+##'       `num.trees`   \tab Number of trees. \cr
+##'       `num.independent.variables` \tab Number of independent variables. \cr
+##'       `treetype`    \tab Type of forest/tree. Classification, regression or survival. \cr
+##'       `num.samples`     \tab Number of samples.
 ##'   }
 ##' @examples
 ##' # TODO: add example here
@@ -435,11 +439,11 @@ predict.MOTE.forest <- function(object, data, predict.all = FALSE,
 ##' 
 ##' @references
 ##' \itemize{
-##'   \item Wright, M. N. & Ziegler, A. (2017). ranger: A Fast Implementation of Random Forests for High Dimensional Data in C++ and R. J Stat Softw 77:1-17. \url{https://doi.org/10.18637/jss.v077.i01}.
-##'   \item Wager, S., Hastie T., & Efron, B. (2014). Confidence Intervals for Random Forests: The Jackknife and the Infinitesimal Jackknife. J Mach Learn Res 15:1625-1651. \url{http://jmlr.org/papers/v15/wager14a.html}.
-##'   \item Meinshausen (2006). Quantile Regression Forests. J Mach Learn Res 7:983-999. \url{http://www.jmlr.org/papers/v7/meinshausen06a.html}.  
+##'   \item Wright, M. N. & Ziegler, A. (2017). ranger: A Fast Implementation of Random Forests for High Dimensional Data in C++ and R. J Stat Softw 77:1-17. <https://doi.org/10.18637/jss.v077.i01>.
+##'   \item Wager, S., Hastie T., & Efron, B. (2014). Confidence Intervals for Random Forests: The Jackknife and the Infinitesimal Jackknife. J Mach Learn Res 15:1625-1651. <http://jmlr.org/papers/v15/wager14a.html>.
+##'   \item Meinshausen (2006). Quantile Regression Forests. J Mach Learn Res 7:983-999. <http://www.jmlr.org/papers/v7/meinshausen06a.html>.  
 ##'   }
-##' @seealso \code{\link{ranger}}
+##' @seealso [ranger()]
 ##' @author Marvin N. Wright
 ##' @export
 predict.MOTE <- function(object, data = NULL, predict.all = FALSE,
@@ -509,9 +513,7 @@ predict.MOTE <- function(object, data = NULL, predict.all = FALSE,
   # } else {
   
   
-  break.pt <- 1
   
-  break.pt2 <- 1
   
     ## Non-quantile prediction
     if (is.null(data)) {

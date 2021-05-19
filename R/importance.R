@@ -32,11 +32,13 @@ importance <- function(x, ...)  UseMethod("importance")
 ##' Extract variable importance of MOTE object.
 ##'
 ##'
+##' `r lifecycle::badge('experimental')`
+##'
 ##' @title MOTE variable importance
 ##' @param x MOTE object.
 ##' @param ... Further arguments passed to or from other methods.
 ##' @return Variable importance measures.
-##' @seealso \code{\link{MOTE}}
+##' @seealso [MOTE()]
 ##' @author Marvin N. Wright
 ##' @aliases importance
 ##' @export 
