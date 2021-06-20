@@ -42,7 +42,7 @@ sim_MOTE_data(
 A nested list that contain training data and testing data. TODO: add more introdcution to whats in the list
 }
 \description{
-Simulate MOTTE formated data
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 }
 \examples{
 set.seed(1)

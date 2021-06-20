@@ -103,6 +103,8 @@ MOTE is a fast implementation of MOTE RF (Guo et al. 2021), a random forest mode
 \details{
 Forests of extremely randomized trees (Geurts et al. 2006) can be grown.
 
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
+
 Note that:
 \itemize{
 \item nodes with size smaller than \code{min.node.size} can occur, as in original Random Forests.

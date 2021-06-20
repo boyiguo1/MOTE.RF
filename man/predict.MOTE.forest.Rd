@@ -51,6 +51,8 @@ Object of class \code{ranger.prediction} with elements
 Prediction with new data and a saved forest from Ranger.
 }
 \details{
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
+
 For \code{type = 'response'} (the default), the predicted classes (classification), predicted numeric values (regression), predicted probabilities (probability estimation) or survival probabilities (survival) are returned.
 
 For classification and \code{predict.all = TRUE}, a factor levels are returned as numerics.

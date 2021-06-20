@@ -5,3 +5,7 @@ MOTECpp <- function(x_b, x_diff, y_diff, trt, variable_names, num_trees, verbose
     .Call(`_MOTE_RF_MOTECpp`, x_b, x_diff, y_diff, trt, variable_names, num_trees, verbose, seed, num_threads, write_forest, min_node_size, prediction_mode, loaded_forest, sample_with_replacement, class_weights, predict_all, keep_inbag, sample_fraction, minprop, holdout, num_random_splits, oob_error, max_depth, inbag, use_inbag)
 }
 
+MOTECpp <- function(x, y, trt, variable_names, num_trees, verbose, seed, num_threads, write_forest, min_node_size, prediction_mode, loaded_forest, sample_with_replacement, class_weights, predict_all, keep_inbag, sample_fraction, minprop, holdout, num_random_splits, oob_error, max_depth, inbag, use_inbag) {
+    .Call(`_MOTE_RF_MOTECpp`, x, y, trt, variable_names, num_trees, verbose, seed, num_threads, write_forest, min_node_size, prediction_mode, loaded_forest, sample_with_replacement, class_weights, predict_all, keep_inbag, sample_fraction, minprop, holdout, num_random_splits, oob_error, max_depth, inbag, use_inbag)
+}
+

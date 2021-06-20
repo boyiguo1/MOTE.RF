@@ -9,8 +9,8 @@
  R package "ranger" under GPL3 license.
 #-------------------------------------------------------------------------------*/
  
-#ifndef DATA_H_
-#define DATA_H_
+#ifndef DATAMV_H_
+#define DATAMV_H_
  
 #include <vector>
 #include <iostream>
@@ -33,27 +33,19 @@ using namespace arma;
  
  namespace MOTE {
  
- class Data {
+ class DataMv {
  public:
-   Data():
+   DataMv():
     num_rows(0), num_cols(0)//, num_rows_rounded(0), 
      // externalData(true), 
     //index_data(0), max_num_unique_values(0)
     {
    }
    
-   Data(mat& x_b, mat& x_diff,
-        mat& y_diff,
-            vec trt,
+   DataMv(mat& x, mat& y,
             std::vector<std::string> variable_names, size_t num_rows, size_t num_cols) {
-     this->x_b = x_b;
-     this->x_diff = x_diff;
-     this->y_diff = y_diff;
-     this->trt = trt;
-     
-     // Debug line: if trt could only contains two values
-     if(!all((trt==1) || (trt==-1)))
-       throw std::runtime_error("Trt must be either 1 or -1");
+     this->x = x;
+     this->y = y;
      
      this->variable_names = variable_names;
      this->num_rows = num_rows;
@@ -62,8 +54,8 @@ using namespace arma;
    
    
    
-   Data(const Data&) = delete;
-   Data& operator=(const Data&) = delete;
+   DataMv(const DataMv&) = delete;
+   DataMv& operator=(const DataMv&) = delete;
    
    size_t getNumRows() const {
       return num_rows;
@@ -74,40 +66,25 @@ using namespace arma;
    }
    
    size_t get_y_cols() const {
-      return y_diff.n_cols;
+      return y.n_cols;
    }
    
-   vec get_trt() const {
-      return trt;
+   
+   mat get_y_rows(uvec pos) const {
+      return y.rows(pos);
    }
    
-   vec get_trt(uvec pos) const {
-      return trt.elem(pos);
+   mat get_x_rows(uvec pos) const {
+      return x.rows(pos);
    }
    
-   mat get_y_diff_rows(uvec pos) const {
-      return y_diff.rows(pos);
+   rowvec get_x_rows(size_t pos) const {
+      return x.row(pos);
    }
    
-   mat get_x_b_rows(uvec pos) const {
-      return x_b.rows(pos);
-   }
    
-   rowvec get_x_b_rows(size_t pos) const {
-      return x_b.row(pos);
-   }
-   
-   mat get_x_diff_rows(uvec pos) const{
-      return x_diff.rows(pos);
-   }
-   
-   size_t n_y_diff_rows() const{
-      
-      if(!((y_diff.n_rows==x_diff.n_rows) & (x_b.n_rows==y_diff.n_rows) & (y_diff.n_rows== trt.n_elem)))
-         throw std::runtime_error("Inconsistent sample size for Data structure");
-      
-      return y_diff.n_rows;
-   }
+   //    return y_diff.n_rows;
+   // }
    
 
    
@@ -117,14 +94,9 @@ using namespace arma;
    // size_t num_rows_rounded;
    size_t num_cols;
    
-   // NOTE:
-   // trt[i]==1 when trt is in the first level
-   // trt[i]==-1 when trt is in the second level
-   vec trt;
    
-   mat x_b;
-   mat x_diff;
-   mat y_diff;
+   mat x;
+   mat y;
    
    
    // bool externalData;
@@ -145,5 +117,5 @@ using namespace arma;
  
  } // namespace ranger
  
-#endif /* DATA_H_ */
+#endif /* DATAMV_H_ */
  
