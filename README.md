@@ -4,7 +4,7 @@
 # MOTE.RF
 
 <!-- badges: start -->
-
+[![DOI](https://zenodo.org/badge/305523544.svg)](https://zenodo.org/badge/latestdoi/305523544)
 [![R-CMD-check](https://github.com/boyiguo1/MOTE.RF/workflows/R-CMD-check/badge.svg)](https://github.com/boyiguo1/MOTE.RF/actions)
 [![Lifecycle:
 experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
