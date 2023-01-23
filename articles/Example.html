@@ -19,6 +19,8 @@
 <![endif]-->
 </head>
 <body data-spy="scroll" data-target="#toc">
+    
+
     <div class="container template-article">
       <header><div class="navbar navbar-default navbar-fixed-top" role="navigation">
   <div class="container">
@@ -31,23 +33,17 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">MOTE.RF</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.3.0.9000</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.3.0.9000</span>
       </span>
     </div>
 
     <div id="navbar" class="navbar-collapse collapse">
       <ul class="nav navbar-nav">
 <li>
-  <a href="../index.html">
-    <span class="fas fa-home fa-lg"></span>
-     
-  </a>
-</li>
-<li>
   <a href="../reference/index.html">Reference</a>
 </li>
 <li class="dropdown">
-  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
     Articles
      
     <span class="caret"></span>
@@ -61,7 +57,7 @@
       </ul>
 <ul class="nav navbar-nav navbar-right">
 <li>
-  <a href="https://github.com/boyiguo1/MOTE.RF/">
+  <a href="https://github.com/boyiguo1/MOTE.RF/" class="external-link">
     <span class="fab fa-github fa-lg"></span>
      
   </a>
@@ -82,7 +78,7 @@
       <h1 data-toc-skip>Example</h1>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/boyiguo1/MOTE.RF/blob/master/vignettes/Example.Rmd"><code>vignettes/Example.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/boyiguo1/MOTE.RF/blob/HEAD/vignettes/Example.Rmd" class="external-link"><code>vignettes/Example.Rmd</code></a></small>
       <div class="hidden name"><code>Example.Rmd</code></div>
 
     </div>
@@ -90,60 +86,60 @@
     
     
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://boyiguo1.github.io/MOTE.RF">MOTE.RF</a></span><span class="op">)</span>
-<span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va">tidyverse</span><span class="op">)</span></code></pre></div>
-<div id="simulate-mote-data" class="section level2">
-<h2 class="hasAnchor">
-<a href="#simulate-mote-data" class="anchor"></a>Simulate MOTE Data</h2>
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://boyiguo1.github.io/MOTE.RF">MOTE.RF</a></span><span class="op">)</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://tidyverse.tidyverse.org" class="external-link">tidyverse</a></span><span class="op">)</span></span></code></pre></div>
+<div class="section level2">
+<h2 id="simulate-mote-data">Simulate MOTE Data<a class="anchor" aria-label="anchor" href="#simulate-mote-data"></a>
+</h2>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/Random.html">set.seed</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span>
-<span class="va">B</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/create.B.html">create.B</a></span><span class="op">(</span><span class="fl">10</span><span class="op">)</span>
-<span class="va">Z</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/create.Z.html">create.Z</a></span><span class="op">(</span><span class="fl">10</span>,<span class="fl">3</span><span class="op">)</span>
-
-<span class="va">sim.dat</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/sim_MOTE_data.html">sim_MOTE_data</a></span><span class="op">(</span>B <span class="op">=</span> <span class="va">B</span>, Z <span class="op">=</span> <span class="va">Z</span><span class="op">)</span>
-
-
-<span class="co"># Organize data by standardize</span>
-<span class="va">train.dat</span> <span class="op">&lt;-</span> <span class="va">sim.dat</span><span class="op">$</span><span class="va">train</span>
-
-<span class="va">x.b</span> <span class="op">&lt;-</span> <span class="va">train.dat</span><span class="op">$</span><span class="va">x.b</span>
-<span class="va">x.e</span> <span class="op">&lt;-</span> <span class="va">train.dat</span><span class="op">$</span><span class="va">x.e</span>
-<span class="va">y.b</span> <span class="op">&lt;-</span> <span class="va">train.dat</span><span class="op">$</span><span class="va">y.b</span>
-<span class="va">y.e</span> <span class="op">&lt;-</span> <span class="va">train.dat</span><span class="op">$</span><span class="va">y.e</span>
-
-<span class="va">treat</span> <span class="op">&lt;-</span> <span class="va">train.dat</span><span class="op">$</span><span class="va">trt</span>
-
-
-<span class="co"># scaling test.dat</span>
-<span class="va">test.dat</span> <span class="op">&lt;-</span> <span class="va">sim.dat</span><span class="op">$</span><span class="va">test</span>
-<span class="va">test.x.b</span> <span class="op">&lt;-</span> <span class="va">test.dat</span><span class="op">$</span><span class="va">x.b</span>
-<span class="co"># true.trt.diff &lt;- test.dat$y.e.1 - test.dat$y.e.2</span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span></span>
+<span><span class="va">B</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/create.B.html">create.B</a></span><span class="op">(</span><span class="fl">10</span><span class="op">)</span></span>
+<span><span class="va">Z</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/create.Z.html">create.Z</a></span><span class="op">(</span><span class="fl">10</span>,<span class="fl">3</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">sim.dat</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/sim_MOTE_data.html">sim_MOTE_data</a></span><span class="op">(</span>B <span class="op">=</span> <span class="va">B</span>, Z <span class="op">=</span> <span class="va">Z</span><span class="op">)</span></span>
+<span></span>
+<span></span>
+<span><span class="co"># Organize data by standardize</span></span>
+<span><span class="va">train.dat</span> <span class="op">&lt;-</span> <span class="va">sim.dat</span><span class="op">$</span><span class="va">train</span></span>
+<span></span>
+<span><span class="va">x.b</span> <span class="op">&lt;-</span> <span class="va">train.dat</span><span class="op">$</span><span class="va">x.b</span></span>
+<span><span class="va">x.e</span> <span class="op">&lt;-</span> <span class="va">train.dat</span><span class="op">$</span><span class="va">x.e</span></span>
+<span><span class="va">y.b</span> <span class="op">&lt;-</span> <span class="va">train.dat</span><span class="op">$</span><span class="va">y.b</span></span>
+<span><span class="va">y.e</span> <span class="op">&lt;-</span> <span class="va">train.dat</span><span class="op">$</span><span class="va">y.e</span></span>
+<span></span>
+<span><span class="va">treat</span> <span class="op">&lt;-</span> <span class="va">train.dat</span><span class="op">$</span><span class="va">trt</span></span>
+<span></span>
+<span></span>
+<span><span class="co"># scaling test.dat</span></span>
+<span><span class="va">test.dat</span> <span class="op">&lt;-</span> <span class="va">sim.dat</span><span class="op">$</span><span class="va">test</span></span>
+<span><span class="va">test.x.b</span> <span class="op">&lt;-</span> <span class="va">test.dat</span><span class="op">$</span><span class="va">x.b</span></span>
+<span><span class="co"># true.trt.diff &lt;- test.dat$y.e.1 - test.dat$y.e.2</span></span></code></pre></div>
 </div>
-<div id="handling-of-discrete-covariates" class="section level2">
-<h2 class="hasAnchor">
-<a href="#handling-of-discrete-covariates" class="anchor"></a>Handling of Discrete Covariates</h2>
+<div class="section level2">
+<h2 id="handling-of-discrete-covariates">Handling of Discrete Covariates<a class="anchor" aria-label="anchor" href="#handling-of-discrete-covariates"></a>
+</h2>
 </div>
-<div id="handling-of-missing-values" class="section level2">
-<h2 class="hasAnchor">
-<a href="#handling-of-missing-values" class="anchor"></a>Handling of Missing Values</h2>
+<div class="section level2">
+<h2 id="handling-of-missing-values">Handling of Missing Values<a class="anchor" aria-label="anchor" href="#handling-of-missing-values"></a>
+</h2>
 </div>
-<div id="random-forest-fitting" class="section level2">
-<h2 class="hasAnchor">
-<a href="#random-forest-fitting" class="anchor"></a>Random Forest Fitting</h2>
+<div class="section level2">
+<h2 id="random-forest-fitting">Random Forest Fitting<a class="anchor" aria-label="anchor" href="#random-forest-fitting"></a>
+</h2>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"> <span class="va">RF.mdl</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/MOTE.html">MOTE</a></span><span class="op">(</span>x.b <span class="op">=</span> <span class="va">x.b</span>, x.e <span class="op">=</span> <span class="va">x.e</span>,
-                treat <span class="op">=</span> <span class="va">treat</span>,
-                y.b <span class="op">=</span> <span class="va">y.b</span>, y.e <span class="op">=</span> <span class="va">y.e</span>,
-                <span class="co"># replace=F,</span>
-                num.trees <span class="op">=</span> <span class="fl">2</span>,
-                num.random.splits <span class="op">=</span> <span class="fl">100</span>,
-                <span class="co"># max.depth=2,</span>
-                sample.fraction <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html">rep</a></span><span class="op">(</span><span class="fl">0.8</span>,<span class="fl">2</span><span class="op">)</span>,
-                num.threads <span class="op">=</span> <span class="fl">1</span>,
-                verbose<span class="op">=</span><span class="cn">T</span><span class="op">)</span>
-
-
-<span class="fu"><a href="https://rdrr.io/r/stats/predict.html">predict</a></span> <span class="op">(</span><span class="va">RF.mdl</span>, <span class="va">test.x.b</span><span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span> <span class="va">RF.mdl</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/MOTE.html">MOTE</a></span><span class="op">(</span>x.b <span class="op">=</span> <span class="va">x.b</span>, x.e <span class="op">=</span> <span class="va">x.e</span>,</span>
+<span>                treat <span class="op">=</span> <span class="va">treat</span>,</span>
+<span>                y.b <span class="op">=</span> <span class="va">y.b</span>, y.e <span class="op">=</span> <span class="va">y.e</span>,</span>
+<span>                <span class="co"># replace=F,</span></span>
+<span>                num.trees <span class="op">=</span> <span class="fl">2</span>,</span>
+<span>                num.random.splits <span class="op">=</span> <span class="fl">100</span>,</span>
+<span>                <span class="co"># max.depth=2,</span></span>
+<span>                sample.fraction <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">0.8</span>,<span class="fl">2</span><span class="op">)</span>,</span>
+<span>                num.threads <span class="op">=</span> <span class="fl">1</span>,</span>
+<span>                verbose<span class="op">=</span><span class="cn">T</span><span class="op">)</span></span>
+<span></span>
+<span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict</a></span> <span class="op">(</span><span class="va">RF.mdl</span>, <span class="va">test.x.b</span><span class="op">)</span></span></code></pre></div>
 </div>
   </div>
 
@@ -158,11 +154,13 @@
 
 
       <footer><div class="copyright">
-  <p>Developed by Boyi Guo, Ruoqing Zhu.</p>
+  <p></p>
+<p>Developed by Boyi Guo, Ruoqing Zhu.</p>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
+  <p></p>
+<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.7.</p>
 </div>
 
       </footer>
@@ -170,6 +168,8 @@
 
   
 
+
+  
 
   </body>
 </html>
